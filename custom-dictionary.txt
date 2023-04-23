@@ -1,0 +1,7 @@
+bufnr
+findfile
+isempty
+lnum
+nvim
+readfile
+writefile

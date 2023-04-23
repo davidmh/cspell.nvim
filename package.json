@@ -1,0 +1,7 @@
+{
+  "name": "cspell.nvim",
+  "packageManager": "yarn@3.5.0",
+  "devDependencies": {
+    "cspell": "^6.31.1"
+  }
+}
