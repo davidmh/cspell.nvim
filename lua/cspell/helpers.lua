@@ -1,4 +1,6 @@
 local Path = require("plenary.path")
+local uv = vim.loop
+
 local M = {}
 
 local CSPELL_CONFIG_FILES = {
@@ -13,40 +15,77 @@ local CSPELL_CONFIG_FILES = {
 local CONFIG_INFO_BY_CWD = {}
 
 --- create a bare minimum cspell.json file
----@param cwd string|nil
----@param file_name string
----@return string
-local create_cspell_json = function(cwd, file_name)
+---@param GeneratorParams
+---@return CSpellConfigInfo
+M.create_cspell_json = function(params)
+    -- TODO(dmejorado): document this option replacing the create_x options
+    local config_file_preferred_name = params:get_config().config_file_preferred_name or "cspell.json"
+
+    if not vim.tbl_contains(CSPELL_CONFIG_FILES, config_file_preferred_name) then
+        vim.notify(
+            "Invalid config_file_preferred_name for cspell json file: "
+                .. config_file_preferred_name
+                .. '. The name "cspell.json" will be used instead',
+            vim.log.levels.WARN
+        )
+        config_file_preferred_name = "cspell.json"
+    end
+
     local cspell_json = {
         version = "0.2",
         language = "en",
         words = {},
         flagWords = {},
     }
+
     local cspell_json_str = vim.json.encode(cspell_json)
-    local cspell_json_file_path = require("null-ls.utils").path.join(cwd or vim.loop.cwd(), file_name)
-    vim.fn.writefile({ cspell_json_str }, cspell_json_file_path)
+    local cspell_json_file_path = require("null-ls.utils").path.join(params.cwd, config_file_preferred_name)
+
+    Path:new(cspell_json_file_path):write(cspell_json_str, "w")
     vim.notify("Created a new cspell.json file at " .. cspell_json_file_path, vim.log.levels.INFO)
-    return cspell_json_file_path
+
+    local info = {
+        config = cspell_json,
+        path = cspell_json_file_path,
+    }
+
+    CONFIG_INFO_BY_CWD[params.cwd] = info
+
+    return info
+end
+
+---@param filename string
+---@param cwd string
+---@return string|nil
+local function find_file(filename, cwd)
+    ---@type string|nil
+    local current_dir = cwd
+    local root_dir = "/"
+
+    repeat
+        local file_path = current_dir .. "/" .. filename
+        local stat = uv.fs_stat(file_path)
+        if stat and stat.type == "file" then
+            return file_path
+        end
+
+        current_dir = uv.fs_realpath(current_dir .. "/..")
+    until current_dir == root_dir
+
+    return nil
 end
 
 --- Find the first cspell.json file in the directory tree
 ---@param cwd string
 ---@return string|nil
 local find_cspell_config_path = function(cwd)
-    local cspell_json_path = nil
     for _, file in ipairs(CSPELL_CONFIG_FILES) do
-        local path = vim.fs.find(file, {
-            path = cwd or vim.loop.cwd(),
-            upward = true,
-            limit = 1,
-        })[1]
-        if path ~= "" then
-            cspell_json_path = path
-            break
+        local path = find_file(file, cwd or vim.loop.cwd())
+        if path then
+            return path
         end
     end
-    return cspell_json_path
+    return nil
 end
 
 ---@class GeneratorParams
@@ -58,32 +97,14 @@ end
 
 ---@param params GeneratorParams
 ---@return CSpellConfigInfo|nil
-M.get_or_create_cspell_config = function(params)
+M.get_cspell_config = function(params)
     -- todo: silent create?
     local config = params:get_config()
     local find_json = config.find_json or find_cspell_config_path
 
-    -- create_config_file if nil defaults to true
-    local create_config_file = config.create_config_file ~= false
-
-    local create_config_file_name = config.create_config_file_name or "cspell.json"
-
-    if not vim.tbl_contains(CSPELL_CONFIG_FILES, create_config_file_name) then
-        vim.notify(
-            "Invalid default file name for cspell json file: "
-                .. create_config_file_name
-                .. '. The name "cspell.json" will be used instead',
-            vim.log.levels.WARN
-        )
-        create_config_file_name = "cspell.json"
-    end
-
     local cspell_json_path = find_json(params.cwd)
-        or (create_config_file and create_cspell_json(params.cwd, create_config_file_name))
-        or nil
 
     if cspell_json_path == nil or cspell_json_path == "" then
-        vim.notify("\nNo cspell json file found in the directory tree.\n", vim.log.levels.WARN)
         return
     end
 
@@ -105,12 +126,12 @@ end
 --- The first run is meant to be a cache warm up
 ---@param params GeneratorParams
 ---@return CSpellConfigInfo|nil
-M.async_get_or_create_config_info = function(params)
+M.async_get_config_info = function(params)
     ---@type uv_async_t|nil
     local async
     async = vim.loop.new_async(function()
         if CONFIG_INFO_BY_CWD[params.cwd] == nil then
-            local config = M.get_or_create_cspell_config(params)
+            local config = M.get_cspell_config(params)
             CONFIG_INFO_BY_CWD[params.cwd] = config
         end
         async:close()

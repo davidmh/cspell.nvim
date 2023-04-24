@@ -2,12 +2,15 @@ local h = require("cspell.helpers")
 
 ---@param diagnostic Diagnostic
 ---@param word string
----@param cspell CSpellConfigInfo
+---@param params GeneratorParams
+---@param cspell CSpellConfigInfo|nil
 ---@return CodeAction
-return function(diagnostic, word, cspell)
+return function(diagnostic, word, params, cspell)
     return {
         title = 'Add "' .. word .. '" to cspell json file',
         action = function()
+            cspell = cspell or h.create_cspell_json(params)
+
             if not cspell.config.words then
                 cspell.config.words = {}
             end

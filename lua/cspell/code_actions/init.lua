@@ -45,12 +45,12 @@ return make_builtin({
             ---@type table<number, CodeAction>
             local actions = {}
 
+            local cspell = h.async_get_config_info(params)
+
             local diagnostics = cspell_diagnostics(params.bufnr, params.row - 1, params.col)
             if vim.tbl_isempty(diagnostics) then
                 return actions
             end
-
-            local cspell = h.async_get_or_create_config_info(params)
 
             for _, diagnostic in ipairs(diagnostics) do
                 -- replace word with a suggestion
@@ -63,16 +63,14 @@ return make_builtin({
                     })
                 end
 
-                if cspell == nil then
-                    break
-                end
-
-                print(vim.inspect(cspell))
-
                 local word = h.get_word(diagnostic)
 
                 -- add word to "words" in cspell.json
-                table.insert(actions, make_add_to_json(diagnostic, word, cspell))
+                table.insert(actions, make_add_to_json(diagnostic, word, params, cspell))
+
+                if cspell == nil then
+                    break
+                end
 
                 -- add word to a custom dictionary
                 for _, dictionary in ipairs(cspell.config.dictionaryDefinitions or {}) do

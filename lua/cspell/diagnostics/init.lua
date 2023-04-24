@@ -51,7 +51,7 @@ return h.make_builtin({
                 -- only enable suggestions when using the code actions built-in, since they slow down the command
                 cspell_args = vim.list_extend({ "--show-suggestions" }, cspell_args)
                 -- warm up the config cache so we have the config ready by the time we call the code action
-                helpers.async_get_or_create_config_info(params)
+                helpers.async_get_config_info(params)
             end
 
             return cspell_args
