@@ -18,8 +18,8 @@ local CONFIG_INFO_BY_CWD = {}
 ---@param GeneratorParams
 ---@return CSpellConfigInfo
 M.create_cspell_json = function(params)
-    -- TODO(dmejorado): document this option replacing the create_x options
-    local config_file_preferred_name = params:get_config().config_file_preferred_name or "cspell.json"
+    local config = params:get_config()
+    local config_file_preferred_name = config.config_file_preferred_name or "cspell.json"
 
     if not vim.tbl_contains(CSPELL_CONFIG_FILES, config_file_preferred_name) then
         vim.notify(

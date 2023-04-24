@@ -29,6 +29,21 @@ local sources = { cspell.diagnostics, cspell.code_actions }
 - Filetypes: `{}`
 - Method: `code_action`
 
+### Configuration options
+
+```lua
+cspell.code_actions.with({
+  config = {
+    -- The CSpell configuration file can take a few different names this option
+    -- lets you specify which name you would like to use when creating a new
+    -- config file from within the `Add word to cspell json file` action.
+    --
+    -- See the currently supported files in https://github.com/davidmh/cspell.nvim/blob/main/lua/cspell/helpers.lua
+    config_file_preferred_name = 'cspell.json',
+  }
+})
+```
+
 ### Notes
 
 - The code action source depends on the diagnostics, so make sure to register it too.
