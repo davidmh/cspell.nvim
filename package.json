@@ -2,6 +2,12 @@
   "name": "cspell.nvim",
   "packageManager": "yarn@3.5.0",
   "devDependencies": {
+    "@commitlint/config-conventional": "^17.6.1",
+    "commitlint": "latest",
+    "conventional-changelog-conventionalcommits": "^5.0.0",
     "cspell": "^6.31.1"
+  },
+  "scripts": {
+    "lint:commit": "commitlint --config commitlint.config.js"
   }
 }
