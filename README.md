@@ -40,6 +40,13 @@ cspell.code_actions.with({
     --
     -- See the currently supported files in https://github.com/davidmh/cspell.nvim/blob/main/lua/cspell/helpers.lua
     config_file_preferred_name = 'cspell.json',
+
+    --- A way to define your own logic to find the CSpell configuration file.
+    ---@params cwd The same current working directory defined in the source,
+    --             defaulting to vim.loop.cwd()
+    ---@return string|nil The path of the json file
+    find_json = function(cwd)
+    end,
   }
 })
 ```

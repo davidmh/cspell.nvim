@@ -15,7 +15,7 @@ local CSPELL_CONFIG_FILES = {
 local CONFIG_INFO_BY_CWD = {}
 
 --- create a bare minimum cspell.json file
----@param GeneratorParams
+---@param params GeneratorParams
 ---@return CSpellConfigInfo
 M.create_cspell_json = function(params)
     local config = params:get_config()
@@ -88,6 +88,10 @@ local find_cspell_config_path = function(cwd)
     return nil
 end
 
+---@class CSpellCodeActionSourceConfig
+---@field config_file_preferred_name string
+---@field find_json function
+
 ---@class GeneratorParams
 ---@field bufnr number
 ---@field row number
@@ -98,7 +102,7 @@ end
 ---@param params GeneratorParams
 ---@return CSpellConfigInfo|nil
 M.get_cspell_config = function(params)
-    -- todo: silent create?
+    ---@type CSpellCodeActionSourceConfig
     local config = params:get_config()
     local find_json = config.find_json or find_cspell_config_path
 
