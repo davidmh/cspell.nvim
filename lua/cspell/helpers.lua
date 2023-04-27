@@ -18,8 +18,10 @@ local CONFIG_INFO_BY_CWD = {}
 ---@param params GeneratorParams
 ---@return CSpellConfigInfo
 M.create_cspell_json = function(params)
-    local config = params:get_config()
-    local config_file_preferred_name = config.config_file_preferred_name or "cspell.json"
+    ---@type CSpellCodeActionSourceConfig
+    local code_action_config = params:get_config()
+    local config_file_preferred_name = code_action_config.config_file_preferred_name or "cspell.json"
+    local encode_json = code_action_config.encode_json or vim.json.encode
 
     if not vim.tbl_contains(CSPELL_CONFIG_FILES, config_file_preferred_name) then
         vim.notify(
@@ -38,7 +40,7 @@ M.create_cspell_json = function(params)
         flagWords = {},
     }
 
-    local cspell_json_str = vim.json.encode(cspell_json)
+    local cspell_json_str = encode_json(cspell_json)
     local cspell_json_file_path = require("null-ls.utils").path.join(params.cwd, config_file_preferred_name)
 
     Path:new(cspell_json_file_path):write(cspell_json_str, "w")
@@ -89,8 +91,10 @@ local find_cspell_config_path = function(cwd)
 end
 
 ---@class CSpellCodeActionSourceConfig
----@field config_file_preferred_name string
----@field find_json function
+---@field config_file_preferred_name string|nil
+---@field find_json function|nil
+---@field decode_json function|nil
+---@field encode_json function|nil
 
 ---@class GeneratorParams
 ---@field bufnr number
@@ -103,8 +107,9 @@ end
 ---@return CSpellConfigInfo|nil
 M.get_cspell_config = function(params)
     ---@type CSpellCodeActionSourceConfig
-    local config = params:get_config()
-    local find_json = config.find_json or find_cspell_config_path
+    local code_action_config = params:get_config()
+    local find_json = code_action_config.find_json or find_cspell_config_path
+    local decode_json = code_action_config.decode_json or vim.json.decode
 
     local cspell_json_path = find_json(params.cwd)
 
@@ -113,7 +118,7 @@ M.get_cspell_config = function(params)
     end
 
     local content = Path:new(cspell_json_path):read()
-    local ok, cspell_config = pcall(vim.json.decode, content)
+    local ok, cspell_config = pcall(decode_json, content)
 
     if not ok then
         vim.notify("\nCannot parse cspell json file as JSON.\n", vim.log.levels.ERROR)

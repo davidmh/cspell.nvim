@@ -6,6 +6,10 @@ local h = require("cspell.helpers")
 ---@param cspell CSpellConfigInfo|nil
 ---@return CodeAction
 return function(diagnostic, word, params, cspell)
+    ---@type CSpellCodeActionSourceConfig
+    local code_action_config = params:get_config()
+    local encode_json = code_action_config.encode_json or vim.json.encode
+
     return {
         title = 'Add "' .. word .. '" to cspell json file',
         action = function()
@@ -17,7 +21,7 @@ return function(diagnostic, word, params, cspell)
 
             table.insert(cspell.config.words, word)
 
-            vim.fn.writefile({ vim.json.encode(cspell.config) }, cspell.path)
+            vim.fn.writefile({ encode_json(cspell.config) }, cspell.path)
 
             -- replace word in buffer to trigger cspell to update diagnostics
             h.set_word(diagnostic, word)
