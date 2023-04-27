@@ -31,6 +31,8 @@ local sources = { cspell.diagnostics, cspell.code_actions }
 
 ### Configuration options
 
+All the configuration properties are optional.
+
 ```lua
 cspell.code_actions.with({
   config = {
@@ -47,6 +49,16 @@ cspell.code_actions.with({
     ---@return string|nil The path of the json file
     find_json = function(cwd)
     end,
+
+    ---@param cspell string The contents of the CSpell config file
+    ---@return table
+    encode_json = function(cspell_str)
+    end,
+
+    ---@param cspell table A lua table with the CSpell config values
+    ---@return string
+    encode_json = function(cspell_tbl)
+    end,
   }
 })
 ```
@@ -57,8 +69,6 @@ cspell.code_actions.with({
 
 # TODO
 
-- [ ] Read formatting options to encode the JSON file and the custom dictionary
-      definitions
 - [ ] Custom configuration examples
 - [ ] Tests
 
