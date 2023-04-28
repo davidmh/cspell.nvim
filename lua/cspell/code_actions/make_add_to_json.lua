@@ -21,7 +21,13 @@ return function(diagnostic, word, params, cspell)
 
             table.insert(cspell.config.words, word)
 
-            vim.fn.writefile({ encode_json(cspell.config) }, cspell.path)
+            local encoded = encode_json(cspell.config) or ""
+            local lines = {}
+            for line in encoded:gmatch("[^\r\n]+") do
+                table.insert(lines, line)
+            end
+
+            vim.fn.writefile(lines, cspell.path)
 
             -- replace word in buffer to trigger cspell to update diagnostics
             h.set_word(diagnostic, word)
