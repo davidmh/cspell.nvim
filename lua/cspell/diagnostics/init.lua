@@ -42,7 +42,7 @@ return h.make_builtin({
                 "stdin",
             }
 
-            local using_code_actions = not vim.tbl_isempty(require("null-ls").get_source({
+            local using_code_actions = not vim.tbl_isempty(require("null-ls.sources").get({
                 name = "cspell",
                 method = methods.internal.CODE_ACTION,
             }))

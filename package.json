@@ -8,6 +8,8 @@
     "cspell": "^6.31.1"
   },
   "scripts": {
-    "lint:commit": "commitlint --config commitlint.config.js"
+    "lint:commit": "commitlint --config commitlint.config.js",
+    "clean": "rm -rf .tests/",
+    "test": "./tests/run.sh"
   }
 }
