@@ -67,10 +67,26 @@ cspell.code_actions.with({
 
 - The code action source depends on the diagnostics, so make sure to register it too.
 
+## Tests
+
+The test suite depends on plenary.nvim.
+
+Run `./tests/run.sh` in the root of the project to run the suite or use [neotest]
+to run individual tests from within Neovim.
+
+To avoid a dependency on any plugin managers, the test suite will set up its
+plugin runtime under the `./tests` directory to always have a plenary version
+available.
+
+If you run into plenary-related issues while running the tests, make sure you
+have an up-to-date version of the plugin by clearing that cache with
+`rm -rf .tests/`.
+
+All tests expect the latest Neovim master.
+
 # TODO
 
 - [ ] Custom configuration examples
-- [ ] Tests
 
 # Credits
 
@@ -88,3 +104,4 @@ contributions from: [@JA-Bar], [@PumpedSardines], [@Saecki], [@Sloff], [@mariano
 [@marianozunino]: https://github.com/marianozunino
 [@mtoohey31]: https://github.com/mtoohey31
 [@yoo]: https://github.com/yoo
+[neotest]: https://github.com/nvim-neotest/neotest
