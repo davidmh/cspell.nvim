@@ -93,6 +93,7 @@ end
 ---@class CSpellCodeActionSourceConfig
 ---@field config_file_preferred_name string|nil
 ---@field find_json function|nil
+---@field on_success function|nil
 ---@field decode_json function|nil
 ---@field encode_json function|nil
 

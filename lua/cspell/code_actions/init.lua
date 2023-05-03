@@ -59,6 +59,14 @@ return make_builtin({
                         title = string.format("Use %s", suggestion),
                         action = function()
                             h.set_word(diagnostic, suggestion)
+
+                            ---@type CSpellCodeActionSourceConfig
+                            local code_action_config = params:get_config()
+                            local on_success = code_action_config.on_success
+
+                            if on_success then
+                                on_success(cspell and cspell.path, params, "use_suggestion")
+                            end
                         end,
                     })
                 end
@@ -66,7 +74,15 @@ return make_builtin({
                 local word = h.get_word(diagnostic)
 
                 -- add word to "words" in cspell.json
-                table.insert(actions, make_add_to_json(diagnostic, word, params, cspell))
+                table.insert(
+                    actions,
+                    make_add_to_json({
+                        diagnostic = diagnostic,
+                        word = word,
+                        params = params,
+                        cspell = cspell,
+                    })
+                )
 
                 if cspell == nil then
                     break
@@ -75,7 +91,16 @@ return make_builtin({
                 -- add word to a custom dictionary
                 for _, dictionary in ipairs(cspell.config.dictionaryDefinitions or {}) do
                     if dictionary ~= nil and dictionary.addWords then
-                        table.insert(actions, make_add_to_dictionary_action(diagnostic, word, dictionary))
+                        table.insert(
+                            actions,
+                            make_add_to_dictionary_action({
+                                diagnostic = diagnostic,
+                                word = word,
+                                params = params,
+                                cspell = cspell,
+                                dictionary = dictionary,
+                            })
+                        )
                     end
                 end
             end
