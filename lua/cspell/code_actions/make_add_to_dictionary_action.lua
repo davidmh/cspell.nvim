@@ -10,7 +10,7 @@ local h = require("cspell.helpers")
 ---@param opts AddToDictionaryAction
 ---@return CodeAction
 return function(opts)
-    ---@type CSpellCodeActionSourceConfig
+    ---@type CSpellSourceConfig
     local code_action_config = opts.params:get_config()
     local on_success = code_action_config.on_success
 

@@ -18,7 +18,7 @@ local CONFIG_INFO_BY_CWD = {}
 ---@param params GeneratorParams
 ---@return CSpellConfigInfo
 M.create_cspell_json = function(params)
-    ---@type CSpellCodeActionSourceConfig
+    ---@type CSpellSourceConfig
     local code_action_config = params:get_config()
     local config_file_preferred_name = code_action_config.config_file_preferred_name or "cspell.json"
     local encode_json = code_action_config.encode_json or vim.json.encode
@@ -90,13 +90,6 @@ local find_cspell_config_path = function(cwd)
     return nil
 end
 
----@class CSpellCodeActionSourceConfig
----@field config_file_preferred_name string|nil
----@field find_json function|nil
----@field on_success function|nil
----@field decode_json function|nil
----@field encode_json function|nil
-
 ---@class GeneratorParams
 ---@field bufnr number
 ---@field row number
@@ -107,7 +100,7 @@ end
 ---@param params GeneratorParams
 ---@return CSpellConfigInfo|nil
 M.get_cspell_config = function(params)
-    ---@type CSpellCodeActionSourceConfig
+    ---@type CSpellSourceConfig
     local code_action_config = params:get_config()
     local find_json = code_action_config.find_json or find_cspell_config_path
     local decode_json = code_action_config.decode_json or vim.json.decode
@@ -150,6 +143,16 @@ M.async_get_config_info = function(params)
     async:send()
 
     return CONFIG_INFO_BY_CWD[params.cwd]
+end
+
+--- Checks that both sources use the same config
+--- We need to do that so we can start reading and parsing the cspell
+--- configuration asynchronously as soon as we get the first diagnostic.
+---@param code_actions_config CSpellSourceConfig
+---@param diagnostics_config CSpellSourceConfig
+M.matching_configs = function(code_actions_config, diagnostics_config)
+    return (vim.tbl_isempty(code_actions_config) and vim.tbl_isempty(diagnostics_config))
+        or code_actions_config == diagnostics_config
 end
 
 --- Get the word associated with the diagnostic
@@ -216,3 +219,10 @@ return M
 ---@field name string
 ---@field path string
 ---@field addWords boolean|nil
+
+---@class CSpellSourceConfig
+---@field config_file_preferred_name string|nil
+---@field find_json function|nil
+---@field decode_json function|nil
+---@field encode_json function|nil
+---@field on_success function|nil

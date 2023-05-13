@@ -60,7 +60,7 @@ return make_builtin({
                         action = function()
                             h.set_word(diagnostic, suggestion)
 
-                            ---@type CSpellCodeActionSourceConfig
+                            ---@type CSpellSourceConfig
                             local code_action_config = params:get_config()
                             local on_success = code_action_config.on_success
 

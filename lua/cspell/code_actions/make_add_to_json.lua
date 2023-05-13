@@ -9,7 +9,7 @@ local h = require("cspell.helpers")
 ---@param opts AddToJSONAction
 ---@return CodeAction
 return function(opts)
-    ---@type CSpellCodeActionSourceConfig
+    ---@type CSpellSourceConfig
     local code_action_config = opts.params:get_config()
     local on_success = code_action_config.on_success
     local encode_json = code_action_config.encode_json or vim.json.encode

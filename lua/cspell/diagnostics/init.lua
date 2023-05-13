@@ -22,6 +22,8 @@ local custom_user_data = {
     end,
 }
 
+local needs_warning = true
+
 return h.make_builtin({
     name = "cspell",
     meta = {
@@ -32,6 +34,7 @@ return h.make_builtin({
     filetypes = {},
     generator_opts = {
         command = "cspell",
+        ---@param params GeneratorParams
         args = function(params)
             params.cwd = params.cwd or vim.loop.cwd()
 
@@ -42,16 +45,29 @@ return h.make_builtin({
                 "stdin",
             }
 
-            local using_code_actions = not vim.tbl_isempty(require("null-ls.sources").get({
+            local code_action_source = require("null-ls.sources").get({
                 name = "cspell",
                 method = methods.internal.CODE_ACTION,
-            }))
+            })[1]
 
-            if using_code_actions then
+            if code_action_source ~= nil then
                 -- only enable suggestions when using the code actions built-in, since they slow down the command
                 cspell_args = vim.list_extend({ "--show-suggestions" }, cspell_args)
-                -- warm up the config cache so we have the config ready by the time we call the code action
-                helpers.async_get_config_info(params)
+
+                local code_action_config = code_action_source.config or {}
+                local diagnostics_config = params and params:get_config() or {}
+
+                if helpers.matching_configs(code_action_config, diagnostics_config) then
+                    -- warm up the config cache so we have the config ready by the time we call the code action
+                    helpers.async_get_config_info(params)
+                elseif needs_warning then
+                    needs_warning = false
+                    vim.notify(
+                        "You should use the same config for both sources",
+                        vim.log.levels.WARN,
+                        { title = "cspell.nvim" }
+                    )
+                end
             end
 
             return cspell_args

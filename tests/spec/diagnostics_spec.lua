@@ -79,7 +79,12 @@ describe("diagnostics", function()
                 async_get_config_info = stub(helpers, "async_get_config_info")
                 get_source = stub(require("null-ls.sources"), "get")
                 get_source.returns({ code_actions })
-                args = args_fn({ ft = "lua" })
+                args = args_fn({
+                    ft = "lua",
+                    get_config = function()
+                        return {}
+                    end,
+                })
             end)
 
             after_each(function()
