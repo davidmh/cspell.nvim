@@ -92,6 +92,8 @@ end
 
 ---@class GeneratorParams
 ---@field bufnr number
+---@field bufname string
+---@field ft string
 ---@field row number
 ---@field col number
 ---@field cwd string
