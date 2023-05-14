@@ -52,7 +52,10 @@ describe("diagnostics", function()
                 async_get_config_info = stub(helpers, "async_get_config_info")
                 get_source = stub(require("null-ls.sources"), "get")
                 get_source.returns({})
-                args = args_fn({ ft = "lua" })
+                args = args_fn({
+                    ft = "lua",
+                    bufname = "file.txt",
+                })
             end)
 
             after_each(function()
@@ -69,7 +72,7 @@ describe("diagnostics", function()
                     "lint",
                     "--language-id",
                     "lua",
-                    "stdin",
+                    "stdin://file.txt",
                 }, args)
             end)
         end)
@@ -81,6 +84,7 @@ describe("diagnostics", function()
                 get_source.returns({ code_actions })
                 args = args_fn({
                     ft = "lua",
+                    bufname = "file.txt",
                     get_config = function()
                         return {}
                     end,
@@ -102,7 +106,7 @@ describe("diagnostics", function()
                     "lint",
                     "--language-id",
                     "lua",
-                    "stdin",
+                    "stdin://file.txt",
                 }, args)
             end)
         end)

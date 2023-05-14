@@ -5,3 +5,4 @@ lnum
 nvim
 readfile
 writefile
+bufname

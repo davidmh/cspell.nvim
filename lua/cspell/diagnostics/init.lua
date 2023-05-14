@@ -42,7 +42,7 @@ return h.make_builtin({
                 "lint",
                 "--language-id",
                 params.ft,
-                "stdin",
+                "stdin://" .. params.bufname,
             }
 
             local code_action_source = require("null-ls.sources").get({
