@@ -45,6 +45,11 @@ return h.make_builtin({
                 "stdin://" .. params.bufname,
             }
 
+            local config_path = helpers.get_config_path(params)
+            if config_path then
+                cspell_args = vim.list_extend({ "-c", config_path }, cspell_args)
+            end
+
             local code_action_source = require("null-ls.sources").get({
                 name = "cspell",
                 method = methods.internal.CODE_ACTION,
