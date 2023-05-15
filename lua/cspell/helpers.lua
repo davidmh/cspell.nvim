@@ -13,6 +13,7 @@ local CSPELL_CONFIG_FILES = {
 
 ---@type table<string, CSpellConfigInfo|nil>
 local CONFIG_INFO_BY_CWD = {}
+local PATH_BY_CWD = {}
 
 --- create a bare minimum cspell.json file
 ---@param params GeneratorParams
@@ -104,10 +105,9 @@ end
 M.get_cspell_config = function(params)
     ---@type CSpellSourceConfig
     local code_action_config = params:get_config()
-    local find_json = code_action_config.find_json or find_cspell_config_path
     local decode_json = code_action_config.decode_json or vim.json.decode
 
-    local cspell_json_path = find_json(params.cwd)
+    local cspell_json_path = M.get_config_path(params)
 
     if cspell_json_path == nil or cspell_json_path == "" then
         return
@@ -145,6 +145,16 @@ M.async_get_config_info = function(params)
     async:send()
 
     return CONFIG_INFO_BY_CWD[params.cwd]
+end
+
+M.get_config_path = function(params)
+    if PATH_BY_CWD[params.cwd] == nil then
+        local code_action_config = params:get_config()
+        local find_json = code_action_config.find_json or find_cspell_config_path
+        local cspell_json_path = find_json(params.cwd)
+        PATH_BY_CWD[params.cwd] = cspell_json_path
+    end
+    return PATH_BY_CWD[params.cwd]
 end
 
 --- Checks that both sources use the same config
