@@ -6,3 +6,5 @@ nvim
 readfile
 writefile
 bufname
+luassert
+realpath

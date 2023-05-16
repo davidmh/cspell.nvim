@@ -5,6 +5,10 @@ local diagnostics = require("cspell.diagnostics")
 local code_actions = require("cspell.code_actions")
 local helpers = require("cspell.helpers")
 
+local uv = vim.loop
+
+local CSPELL_CONFIG_PATH = uv.fs_realpath("./cspell.json")
+
 mock(require("null-ls.logger"), true)
 
 describe("diagnostics", function()
@@ -49,12 +53,16 @@ describe("diagnostics", function()
 
         describe("without code actions", function()
             before_each(function()
+                helpers.clear_cache()
                 async_get_config_info = stub(helpers, "async_get_config_info")
                 get_source = stub(require("null-ls.sources"), "get")
                 get_source.returns({})
                 args = args_fn({
                     ft = "lua",
                     bufname = "file.txt",
+                    get_config = function()
+                        return {}
+                    end,
                 })
             end)
 
@@ -69,6 +77,8 @@ describe("diagnostics", function()
 
             it("does not include a suggestions param", function()
                 assert.same({
+                    "-c",
+                    CSPELL_CONFIG_PATH,
                     "lint",
                     "--language-id",
                     "lua",
@@ -79,6 +89,7 @@ describe("diagnostics", function()
 
         describe("with code actions", function()
             before_each(function()
+                helpers.clear_cache()
                 async_get_config_info = stub(helpers, "async_get_config_info")
                 get_source = stub(require("null-ls.sources"), "get")
                 get_source.returns({ code_actions })
@@ -103,6 +114,45 @@ describe("diagnostics", function()
             it("includes a suggestions param", function()
                 assert.same({
                     "--show-suggestions",
+                    "-c",
+                    CSPELL_CONFIG_PATH,
+                    "lint",
+                    "--language-id",
+                    "lua",
+                    "stdin://file.txt",
+                }, args)
+            end)
+        end)
+
+        describe("with custom json config file", function()
+            before_each(function()
+                helpers.clear_cache()
+                async_get_config_info = stub(helpers, "async_get_config_info")
+                get_source = stub(require("null-ls.sources"), "get")
+                get_source.returns({})
+            end)
+
+            after_each(function()
+                get_source:revert()
+                async_get_config_info:revert()
+            end)
+
+            it("includes a suggestions param", function()
+                args = args_fn({
+                    ft = "lua",
+                    bufname = "file.txt",
+                    get_config = function()
+                        return {
+                            find_json = function()
+                                return "some/custom/path/cspell.json"
+                            end,
+                        }
+                    end,
+                })
+
+                assert.same({
+                    "-c",
+                    "some/custom/path/cspell.json",
                     "lint",
                     "--language-id",
                     "lua",

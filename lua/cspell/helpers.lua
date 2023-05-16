@@ -195,6 +195,11 @@ M.set_word = function(diagnostic, new_word)
     )
 end
 
+M.clear_cache = function()
+    PATH_BY_CWD = {}
+    CONFIG_INFO_BY_CWD = {}
+end
+
 return M
 
 ---@class Diagnostic
