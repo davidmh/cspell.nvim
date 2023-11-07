@@ -55,7 +55,7 @@ local config = {
 
   ---@param cspell string The contents of the CSpell config file
   ---@return table
-  encode_json = function(cspell_str)
+  decode_json = function(cspell_str)
   end,
 
   ---@param cspell table A lua table with the CSpell config values
