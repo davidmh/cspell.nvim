@@ -53,6 +53,14 @@ local config = {
   find_json = function(cwd)
   end,
 
+  -- Will find and read the cspell config file synchronously, as soon as the
+  -- code actions generator gets called.
+  --
+  -- If you experience UI-blocking during the first run of this code action, try
+  -- setting this option to false.
+  -- See: https://github.com/davidmh/cspell.nvim/issues/25
+  read_config_synchronously = true,
+
   ---@param cspell string The contents of the CSpell config file
   ---@return table
   decode_json = function(cspell_str)

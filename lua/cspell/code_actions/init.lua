@@ -21,6 +21,19 @@ local cspell_diagnostics = function(bufnr, lnum, cursor_col)
     return diagnostics
 end
 
+---@param code_action_config CSpellSourceConfig
+---@param params GeneratorParams
+local get_config_info = function(code_action_config, params)
+    -- In theory, the call to async_get_config_info in the diagnostics source
+    -- should already have been loaded, that's why we're defaulting reading the
+    -- config synchronously here.
+    if code_action_config.read_config_synchronously then
+        return h.sync_get_config_info(params)
+    end
+
+    return h.async_get_config_info(params)
+end
+
 return make_builtin({
     name = "cspell",
     meta = {
@@ -42,10 +55,13 @@ return make_builtin({
         fn = function(params)
             params.cwd = params.cwd or vim.loop.cwd()
 
+            ---@type CSpellSourceConfig
+            local code_action_config =
+                vim.tbl_extend("force", { read_config_synchronously = true }, params:get_config())
+            local cspell = get_config_info(code_action_config, params)
+
             ---@type table<number, CodeAction>
             local actions = {}
-
-            local cspell = h.async_get_config_info(params)
 
             local diagnostics = cspell_diagnostics(params.bufnr, params.row - 1, params.col)
             if vim.tbl_isempty(diagnostics) then
@@ -60,8 +76,6 @@ return make_builtin({
                         action = function()
                             h.set_word(diagnostic, suggestion)
 
-                            ---@type CSpellSourceConfig
-                            local code_action_config = params:get_config()
                             local on_success = code_action_config.on_success
 
                             if on_success then

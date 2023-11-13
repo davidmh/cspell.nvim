@@ -135,15 +135,20 @@ M.async_get_config_info = function(params)
     ---@type uv_async_t|nil
     local async
     async = vim.loop.new_async(function()
-        if CONFIG_INFO_BY_CWD[params.cwd] == nil then
-            local config = M.get_cspell_config(params)
-            CONFIG_INFO_BY_CWD[params.cwd] = config
-        end
+        M.sync_get_config_info(params)
         async:close()
     end)
 
     async:send()
 
+    return CONFIG_INFO_BY_CWD[params.cwd]
+end
+
+M.sync_get_config_info = function(params)
+    if CONFIG_INFO_BY_CWD[params.cwd] == nil then
+        local config = M.get_cspell_config(params)
+        CONFIG_INFO_BY_CWD[params.cwd] = config
+    end
     return CONFIG_INFO_BY_CWD[params.cwd]
 end
 
@@ -239,6 +244,13 @@ return M
 
 ---@class CSpellSourceConfig
 ---@field config_file_preferred_name string|nil
+--- Will find and read the cspell config file synchronously, as soon as the
+--- code actions generator gets called.
+---
+--- If you experience UI-blocking during the first run of this code action, try
+--- setting this option to false.
+--- See: https://github.com/davidmh/cspell.nvim/issues/25
+---@field read_config_synchronously boolean|nil
 ---@field find_json function|nil
 ---@field decode_json function|nil
 ---@field encode_json function|nil
