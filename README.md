@@ -1,6 +1,7 @@
 # cspell.nvim
 
-A companion plugin for [null-ls], adding support for [cspell] diagnostics and code actions.
+A companion plugin for [nvimtools/none-ls.nvim](https://github.com/nvimtools/none-ls.nvim),
+adding support for [cspell] diagnostics and code actions.
 
 ## Diagnostics
 
