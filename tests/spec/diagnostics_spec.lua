@@ -82,7 +82,7 @@ describe("diagnostics", function()
                     "lint",
                     "--language-id",
                     "lua",
-                    "stdin://file.txt",
+                    "stdin",
                 }, args)
             end)
         end)
@@ -119,7 +119,7 @@ describe("diagnostics", function()
                     "lint",
                     "--language-id",
                     "lua",
-                    "stdin://file.txt",
+                    "stdin",
                 }, args)
             end)
         end)
@@ -156,7 +156,7 @@ describe("diagnostics", function()
                     "lint",
                     "--language-id",
                     "lua",
-                    "stdin://file.txt",
+                    "stdin",
                 }, args)
             end)
         end)

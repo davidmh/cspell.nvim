@@ -42,7 +42,7 @@ return h.make_builtin({
                 "lint",
                 "--language-id",
                 params.ft,
-                "stdin://" .. params.bufname,
+                "stdin",
             }
 
             local config_path = helpers.get_config_path(params)
