@@ -1,26 +1,9 @@
 local h = require("null-ls.helpers")
 local methods = require("null-ls.methods")
 local helpers = require("cspell.helpers")
+local parser = require("cspell.diagnostics.parser")
 
 local DIAGNOSTICS = methods.internal.DIAGNOSTICS
-
-local custom_user_data = {
-    user_data = function(entries, _)
-        if not entries then
-            return
-        end
-
-        local suggestions = {}
-        for suggestion in string.gmatch(entries["_suggestions"], "[^, ]+") do
-            table.insert(suggestions, suggestion)
-        end
-
-        return {
-            suggestions = suggestions,
-            misspelled = entries["_quote"],
-        }
-    end,
-}
 
 local needs_warning = true
 
@@ -83,27 +66,7 @@ return h.make_builtin({
         check_exit_code = function(code)
             return code <= 1
         end,
-        on_output = h.diagnostics.from_patterns({
-            {
-                pattern = ".*:(%d+):(%d+)%s*-%s*(.*%((.*)%))%s*Suggestions:%s*%[(.*)%]",
-                groups = { "row", "col", "message", "_quote", "_suggestions" },
-                overrides = {
-                    adapters = {
-                        h.diagnostics.adapters.end_col.from_quote,
-                        custom_user_data,
-                    },
-                },
-            },
-            {
-                pattern = [[.*:(%d+):(%d+)%s*-%s*(.*%((.*)%))]],
-                groups = { "row", "col", "message", "_quote" },
-                overrides = {
-                    adapters = {
-                        h.diagnostics.adapters.end_col.from_quote,
-                    },
-                },
-            },
-        }),
+        on_output = parser,
     },
     factory = h.generator_factory,
 })
