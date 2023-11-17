@@ -13,9 +13,15 @@ return function(opts)
     ---@type CSpellSourceConfig
     local code_action_config = opts.params:get_config()
     local on_success = code_action_config.on_success
+    -- The null-ls diagnostic reports the wrong range for the CSpell error if
+    -- the line contains a unicode character.
+    -- As a workaround, we read the misspelled word from the diagnostic's
+    -- user_data. And only use the word from the range to trigger a new diagnostic.
+    -- See: https://github.com/jose-elias-alvarez/null-ls.nvim/issues/1630
+    local misspelled_word = opts.diagnostic.user_data.misspelled
 
     return {
-        title = 'Add "' .. opts.word .. '" to dictionary "' .. opts.dictionary.name .. '"',
+        title = 'Add "' .. misspelled_word .. '" to dictionary "' .. opts.dictionary.name .. '"',
         action = function()
             if opts.dictionary == nil then
                 return
@@ -26,10 +32,10 @@ return function(opts)
                 vim.notify("Can't read " .. dictionary_path, vim.log.levels.ERROR)
                 return
             end
-            table.insert(dictionary_body, opts.word)
+            table.insert(dictionary_body, misspelled_word)
 
             vim.fn.writefile(dictionary_body, dictionary_path)
-            vim.notify('Added "' .. opts.word .. '" to ' .. opts.dictionary.path, vim.log.levels.INFO)
+            vim.notify('Added "' .. misspelled_word .. '" to ' .. opts.dictionary.path, vim.log.levels.INFO)
 
             -- replace word in buffer to trigger cspell to update diagnostics
             h.set_word(opts.diagnostic, opts.word)
