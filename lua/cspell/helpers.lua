@@ -225,6 +225,7 @@ return M
 
 ---@class UserData
 ---@field suggestions table<number, string> Suggested words for the diagnostic
+---@field misspelled string The misspelled word
 
 ---@class CSpellConfigInfo
 ---@field config CSpellConfig

@@ -13,9 +13,15 @@ return function(opts)
     local code_action_config = opts.params:get_config()
     local on_success = code_action_config.on_success
     local encode_json = code_action_config.encode_json or vim.json.encode
+    -- The null-ls diagnostic reports the wrong range for the CSpell error if
+    -- the line contains a unicode character.
+    -- As a workaround, we read the misspelled word from the diagnostic's
+    -- user_data. And only use the word from the range to trigger a new diagnostic.
+    -- See: https://github.com/jose-elias-alvarez/null-ls.nvim/issues/1630
+    local misspelled_word = opts.diagnostic.user_data.misspelled
 
     return {
-        title = 'Add "' .. opts.word .. '" to cspell json file',
+        title = 'Add "' .. misspelled_word .. '" to cspell json file',
         action = function()
             local cspell = opts.cspell or h.create_cspell_json(opts.params)
 
@@ -23,7 +29,7 @@ return function(opts)
                 cspell.config.words = {}
             end
 
-            table.insert(cspell.config.words, opts.word)
+            table.insert(cspell.config.words, misspelled_word)
 
             local encoded = encode_json(cspell.config) or ""
             local lines = {}
@@ -32,6 +38,7 @@ return function(opts)
             end
 
             vim.fn.writefile(lines, cspell.path)
+            vim.notify('Added "' .. misspelled_word .. '" to ' .. cspell.path, vim.log.levels.INFO)
 
             -- replace word in buffer to trigger cspell to update diagnostics
             h.set_word(opts.diagnostic, opts.word)
