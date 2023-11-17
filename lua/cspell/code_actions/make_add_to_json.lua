@@ -38,7 +38,11 @@ return function(opts)
             end
 
             vim.fn.writefile(lines, cspell.path)
-            vim.notify('Added "' .. misspelled_word .. '" to ' .. cspell.path, vim.log.levels.INFO)
+            vim.notify(
+                'Added "' .. misspelled_word .. '" to ' .. cspell.path,
+                vim.log.levels.INFO,
+                { title = "cspell.nvim" }
+            )
 
             -- replace word in buffer to trigger cspell to update diagnostics
             h.set_word(opts.diagnostic, opts.word)

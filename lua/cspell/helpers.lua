@@ -29,7 +29,8 @@ M.create_cspell_json = function(params)
             "Invalid config_file_preferred_name for cspell json file: "
                 .. config_file_preferred_name
                 .. '. The name "cspell.json" will be used instead',
-            vim.log.levels.WARN
+            vim.log.levels.WARN,
+            { title = "cspell.nvim" }
         )
         config_file_preferred_name = "cspell.json"
     end
@@ -45,7 +46,11 @@ M.create_cspell_json = function(params)
     local cspell_json_file_path = require("null-ls.utils").path.join(params.cwd, config_file_preferred_name)
 
     Path:new(cspell_json_file_path):write(cspell_json_str, "w")
-    vim.notify("Created a new cspell.json file at " .. cspell_json_file_path, vim.log.levels.INFO)
+    vim.notify(
+        "Created a new cspell.json file at " .. cspell_json_file_path,
+        vim.log.levels.INFO,
+        { title = "cspell.nvim" }
+    )
 
     local info = {
         config = cspell_json,
@@ -117,7 +122,7 @@ M.get_cspell_config = function(params)
     local ok, cspell_config = pcall(decode_json, content)
 
     if not ok then
-        vim.notify("\nCannot parse cspell json file as JSON.\n", vim.log.levels.ERROR)
+        vim.notify("\nCannot parse cspell json file as JSON.\n", vim.log.levels.ERROR, { title = "cspell.nvim" })
         return
     end
 
