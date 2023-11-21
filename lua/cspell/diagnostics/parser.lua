@@ -18,15 +18,36 @@ local custom_user_data = {
     end,
 }
 
+--- CSpell doesn't care about multi-byte characters when calculating the
+--- column number for the start of the error. Forwarding the column number
+--- as reported by CSpell, would cause the error to be diagnostic to highlight
+--- the wrong range.
+--- So we delegate that value as a helper property that will help us find the
+--- start and end of the word.
+local custom_from_quote = {
+    end_col = function(entries, line)
+        local quote = entries["_quote"]
+        --- We use the column reported by CSpell as the start index to find the
+        --- current word in the line, in case the word shows up multiple times
+        --- in the same line.
+        local col, end_col = line:find(quote, entries["_col"], true)
+        --- HACK: Since the column reported by CSpell may not match the column
+        --- as counted by lua, we're mutating the entries table to define the
+        --- column property here, so we can account for special characters.
+        entries["col"] = col
+        return end_col + 1
+    end,
+}
+
 -- Finds the messages including a suggestions array, which comes from passing
 -- the --show-suggestions flag to cspell.
 -- That flag is only available when the user has registered the code action.
 local matcher_with_suggestions = {
     pattern = ".*:(%d+):(%d+)%s*-%s*(.*%((.*)%))%s*Suggestions:%s*%[(.*)%]",
-    groups = { "row", "col", "message", "_quote", "_suggestions" },
+    groups = { "row", "_col", "message", "_quote", "_suggestions" },
     overrides = {
         adapters = {
-            h.diagnostics.adapters.end_col.from_quote,
+            custom_from_quote,
             custom_user_data,
         },
     },
@@ -38,10 +59,10 @@ local matcher_with_suggestions = {
 -- used by the code actions.
 local matcher_without_suggestions = {
     pattern = [[.*:(%d+):(%d+)%s*-%s*(.*%((.*)%))]],
-    groups = { "row", "col", "message", "_quote" },
+    groups = { "row", "_col", "message", "_quote" },
     overrides = {
         adapters = {
-            h.diagnostics.adapters.end_col.from_quote,
+            custom_from_quote,
         },
     },
 }

@@ -19,10 +19,11 @@ describe("diagnostics", function()
 
         it("should create a diagnostic", function()
             local output = "/some/path/file.lua:1:18 - Unknown word (variabl)"
-            local diagnostic = parser(output, { content = content })
+            local diagnostic = parser(output, { content = { content } })
 
             assert.same({
-                col = "18",
+                col = 18,
+                end_col = 25,
                 message = "Unknown word (variabl)",
                 row = "1",
             }, diagnostic)
@@ -31,10 +32,11 @@ describe("diagnostics", function()
         it("includes suggestions", function()
             local output =
                 "/some/path/file.lua:1:18 - Unknown word (variabl) Suggestions: [variable, variably, variables, variant, variate]"
-            local diagnostic = parser(output, { content = content })
+            local diagnostic = parser(output, { content = { content } })
 
             assert.same({
-                col = "18",
+                col = 18,
+                end_col = 25,
                 message = "Unknown word (variabl)",
                 row = "1",
                 user_data = {
