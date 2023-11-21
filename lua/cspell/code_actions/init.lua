@@ -77,9 +77,26 @@ return make_builtin({
                             h.set_word(diagnostic, suggestion)
 
                             local on_success = code_action_config.on_success
+                            local on_use_suggestion = code_action_config.on_success
 
                             if on_success then
+                                vim.notify_once(
+                                    "The on_success callback is deprecated, use on_use_suggestion instead",
+                                    vim.log.levels.INFO,
+                                    { title = "cspell.nvim" }
+                                )
                                 on_success(cspell and cspell.path, params, "use_suggestion")
+                            end
+
+                            if on_use_suggestion then
+                                ---@type UseSuggestionSuccess
+                                local payload = {
+                                    misspelled_word = diagnostic.user_data.misspelled,
+                                    suggestion = suggestion,
+                                    cspell_config_path = cspell and cspell.path,
+                                    generator_params = params,
+                                }
+                                on_use_suggestion(payload)
                             end
                         end,
                     })

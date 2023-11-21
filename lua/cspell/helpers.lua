@@ -261,3 +261,23 @@ return M
 ---@field decode_json function|nil
 ---@field encode_json function|nil
 ---@field on_success function|nil
+---@field on_add_to_json function|nil
+---@field on_add_to_dictionary function|nil
+---@field on_use_suggestion function|nil
+
+---@class UseSuggestionSuccess
+---@field misspelled_word string
+---@field suggestion string
+---@field cspell_config_path string|nil
+---@field generator_params GeneratorParams
+
+---@class AddToJSONSuccess
+---@field new_word string
+---@field cspell_config_path string
+---@field generator_params GeneratorParams
+
+---@class AddToDictionarySuccess
+---@field new_word string
+---@field cspell_config_path string
+---@field generator_params GeneratorParams
+---@field dictionary_path string

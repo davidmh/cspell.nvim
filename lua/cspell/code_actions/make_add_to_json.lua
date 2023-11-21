@@ -12,6 +12,7 @@ return function(opts)
     ---@type CSpellSourceConfig
     local code_action_config = opts.params:get_config()
     local on_success = code_action_config.on_success
+    local on_add_to_json = code_action_config.on_add_to_json
     local encode_json = code_action_config.encode_json or vim.json.encode
     -- The null-ls diagnostic reports the wrong range for the CSpell error if
     -- the line contains a unicode character.
@@ -48,7 +49,22 @@ return function(opts)
             h.set_word(opts.diagnostic, opts.word)
 
             if on_success then
+                vim.notify_once(
+                    "The on_success callback is deprecated, use on_add_to_json instead",
+                    vim.log.levels.INFO,
+                    { title = "cspell.nvim" }
+                )
                 on_success(cspell.path, opts.params, "add_to_json")
+            end
+
+            if on_add_to_json then
+                ---@type AddToJSONSuccess
+                local add_to_json_success = {
+                    new_word = misspelled_word,
+                    cspell_config_path = cspell.path,
+                    generator_params = opts.params,
+                }
+                on_add_to_json(add_to_json_success)
             end
         end,
     }
