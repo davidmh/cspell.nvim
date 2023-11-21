@@ -72,25 +72,42 @@ local config = {
   encode_json = function(cspell_tbl)
   end,
 
+  ---@param payload UseSuggestionSuccess
+  on_use_suggestion = function(payload)
+  end
 
+  ---@param payload AddToJSONSuccess
+  on_add_to_json = function(payload)
+      -- For example, you can format the cspell config file after you add a word
+      os.execute(
+          string.format(
+              "jq -S '.words |= sort' %s > %s.tmp && mv %s.tmp %s",
+              payload.cspell_config_path,
+              payload.cspell_config_path,
+              payload.cspell_config_path,
+              payload.cspell_config_path
+          )
+      )
+  end
+
+  ---@param payload AddToDictionarySuccess
+  on_add_to_dictionary = function(payload)
+      -- For example, you can sort the dictionary after adding a word
+      os.execute(
+          string.format(
+              "sort %s -o %s",
+              payload.cspell_config_path,
+              payload.cspell_config_path
+          )
+      )
+  end
+
+  --- DEPRECATED
   --- Callback after a successful execution of a code action.
   ---@param cspell_config_file_path string|nil
   ---@param params GeneratorParams
-  ---@action_name 'use_suggestion'|'add_to_json'|'add_to_dictionary'
+  ---@param action_name 'use_suggestion'|'add_to_json'|'add_to_dictionary'
   on_success = function(cspell_config_file_path, params, action_name)
-      -- For example, you can format the cspell config file after you add a word
-      if action_name == 'add_to_json' then
-          os.execute(
-              string.format(
-                  "cat %s | jq -S '.words |= sort' | tee %s > /dev/null",
-                  cspell_config_file_path,
-                  cspell_config_file_path
-              )
-          )
-      end
-
-      -- Note: The cspell_config_file_path param could be nil for the
-      -- 'use_suggestion' action
   end
 }
 

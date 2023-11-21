@@ -13,6 +13,7 @@ return function(opts)
     ---@type CSpellSourceConfig
     local code_action_config = opts.params:get_config()
     local on_success = code_action_config.on_success
+    local on_add_to_dictionary = code_action_config.on_add_to_dictionary
     -- The null-ls diagnostic reports the wrong range for the CSpell error if
     -- the line contains a unicode character.
     -- As a workaround, we read the misspelled word from the diagnostic's
@@ -45,7 +46,23 @@ return function(opts)
             h.set_word(opts.diagnostic, opts.word)
 
             if on_success then
+                vim.notify_once(
+                    "The on_success callback is deprecated, use on_add_to_dictionary instead",
+                    vim.log.levels.INFO,
+                    { title = "cspell.nvim" }
+                )
                 on_success(opts.cspell.path, opts.params, "add_to_dictionary")
+            end
+
+            if on_add_to_dictionary then
+                ---@type AddToDictionarySuccess
+                local payload = {
+                    new_word = misspelled_word,
+                    generator_params = opts.params,
+                    cspell_config_path = opts.cspell.path,
+                    dictionary_path = opts.dictionary.path,
+                }
+                on_add_to_dictionary(payload)
             end
         end,
     }
