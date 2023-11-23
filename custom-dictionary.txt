@@ -8,3 +8,5 @@ writefile
 bufname
 luassert
 realpath
+neotest
+Neovim
