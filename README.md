@@ -7,7 +7,11 @@ adding support for [cspell] diagnostics and code actions.
 
 ```lua
 local cspell = require('cspell')
-local sources = { cspell.diagnostics }
+require("null-ls").setup {
+    sources = {
+        cspell.diagnostics
+    }
+}
 ```
 
 ### Defaults
@@ -22,7 +26,12 @@ local sources = { cspell.diagnostics }
 
 ```lua
 local cspell = require('cspell')
-local sources = { cspell.diagnostics, cspell.code_actions }
+require("null-ls").setup {
+    sources = {
+        cspell.diagnostics,
+        cspell.code_actions,
+    }
+}
 ```
 
 ### Defaults
@@ -128,9 +137,11 @@ local config = {
 }
 
 local cspell = require('cspell')
-local sources = {
-  cspell.diagnostics.with({ config = config }),
-  cspell.code_actions.with({ config = config }),
+require("null-ls").setup {
+    sources = {
+        cspell.diagnostics.with({ config = config }),
+        cspell.code_actions.with({ config = config }),
+    }
 }
 ```
 
@@ -160,7 +171,7 @@ All tests expect the latest Neovim master.
 - [ ] Custom configuration examples
 
 # Credits
-
+<!-- cSpell:disable -->
 These sources were initially written in jose-elias-alvarez/null-ls.nvim, with
 contributions from: [@JA-Bar], [@PumpedSardines], [@Saecki], [@Sloff], [@marianozunino],
 [@mtoohey31] and [@yoo].
