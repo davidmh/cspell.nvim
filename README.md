@@ -74,10 +74,20 @@ local config = {
 
   ---@param payload UseSuggestionSuccess
   on_use_suggestion = function(payload)
+      -- Includes:
+      payload.misspelled_word
+      payload.suggestion
+      payload.cspell_config_path
+      payload.generator_params
   end
 
   ---@param payload AddToJSONSuccess
   on_add_to_json = function(payload)
+      -- Includes:
+      payload.new_word
+      payload.cspell_config_path
+      payload.generator_params
+
       -- For example, you can format the cspell config file after you add a word
       os.execute(
           string.format(
@@ -92,12 +102,18 @@ local config = {
 
   ---@param payload AddToDictionarySuccess
   on_add_to_dictionary = function(payload)
+      -- Includes:
+      payload.new_word
+      payload.cspell_config_path
+      payload.generator_params
+      payload.dictionary_path
+
       -- For example, you can sort the dictionary after adding a word
       os.execute(
           string.format(
               "sort %s -o %s",
-              payload.cspell_config_path,
-              payload.cspell_config_path
+              payload.dictionary_path,
+              payload.dictionary_path
           )
       )
   end
