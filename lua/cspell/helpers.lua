@@ -7,7 +7,7 @@ local CSPELL_CONFIG_FILES = {
     "cspell.json",
     ".cspell.json",
     "cSpell.json",
-    ".cspell.json",
+    ".cSpell.json",
     ".cspell.config.json",
 }
 
