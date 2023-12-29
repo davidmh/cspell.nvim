@@ -44,6 +44,7 @@ return function(opts)
 
             -- replace word in buffer to trigger cspell to update diagnostics
             h.set_word(opts.diagnostic, opts.word)
+            vim.cmd([[:silent :undo]])
 
             if on_success then
                 vim.notify_once(
