@@ -2,6 +2,7 @@ local Path = require("plenary.path")
 local uv = vim.loop
 
 local M = {}
+local CACHED_JSON_WORDS = {}
 
 local CSPELL_CONFIG_FILES = {
     "cspell.json",
@@ -60,6 +61,62 @@ M.create_cspell_json = function(params)
     CONFIG_INFO_BY_CWD[params.cwd] = info
 
     return info
+end
+
+---@param word string
+M.cache_word_for_json = function(word)
+    CACHED_JSON_WORDS[#CACHED_JSON_WORDS + 1] = word
+end
+
+---@param params GeneratorParams
+M.add_words_to_json = function(params, words)
+    if not words or #words == 0 then
+        return
+    end
+
+    ---@type CSpellSourceConfig
+    local code_action_config = params:get_config()
+    local on_success = code_action_config.on_success
+    local on_add_to_json = code_action_config.on_add_to_json
+    local encode_json = code_action_config.encode_json or vim.json.encode
+
+    local cspell = M.sync_get_config_info(params)
+
+    if not cspell.config.words then
+        cspell.config.words = {}
+    end
+
+    vim.list_extend(cspell.config.words, words)
+    local misspelled_words = table.concat(words, ", ")
+
+    local encoded = encode_json(cspell.config) or ""
+    local lines = {}
+    for line in encoded:gmatch("[^\r\n]+") do
+        table.insert(lines, line)
+    end
+    local json_str = table.concat(lines, "")
+
+    Path:new(cspell.path):write(json_str, "w")
+    vim.notify('Added "' .. misspelled_words .. '" to ' .. cspell.path, vim.log.levels.INFO, { title = "cspell.nvim" })
+
+    if on_success then
+        vim.notify_once(
+            "The on_success callback is deprecated, use on_add_to_json instead",
+            vim.log.levels.INFO,
+            { title = "cspell.nvim" }
+        )
+        on_success(cspell.path, params, "add_to_json")
+    end
+
+    if on_add_to_json then
+        ---@type AddToJSONSuccess
+        local add_to_json_success = {
+            new_word = misspelled_words,
+            cspell_config_path = cspell.path,
+            generator_params = params,
+        }
+        on_add_to_json(add_to_json_success)
+    end
 end
 
 ---@param filename string
@@ -141,6 +198,8 @@ M.async_get_config_info = function(params)
     local async
     async = vim.loop.new_async(function()
         M.sync_get_config_info(params)
+        M.add_words_to_json(params, CACHED_JSON_WORDS)
+        CACHED_JSON_WORDS = {}
         async:close()
     end)
 

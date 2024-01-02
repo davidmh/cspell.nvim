@@ -111,7 +111,6 @@ return make_builtin({
                         diagnostic = diagnostic,
                         word = word,
                         params = params,
-                        cspell = cspell,
                     })
                 )
 
