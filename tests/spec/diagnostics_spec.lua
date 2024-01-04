@@ -53,6 +53,39 @@ describe("diagnostics", function()
         local async_get_config_info
         local args_fn = diagnostics._opts.args
 
+        -- fixtures
+        local misspelled = "variabl"
+        local buf_diagnostics = {
+            {
+                bufnr = 1890,
+                col = 17,
+                end_col = 24,
+                end_lnum = 0,
+                lnum = 0,
+                message = string.format("Unknown word (%s)", misspelled),
+                namespace = 35,
+                row = "1",
+                severity = 2,
+                source = "cspell",
+                user_data = {
+                    misspelled = misspelled,
+                    suggestions = { "variable", "variably", "varia", "varian", "variant" },
+                },
+            },
+        }
+
+        local get_add_to_json_action = function(generator_params)
+            local add_to_json_action
+            local actions = code_actions.generator.fn(generator_params)
+            for _, action in ipairs(actions) do
+                if action.title:match("cspell json file") then
+                    add_to_json_action = action
+                    break
+                end
+            end
+            return add_to_json_action
+        end
+
         describe("without code actions", function()
             before_each(function()
                 helpers.clear_cache()
@@ -163,36 +196,71 @@ describe("diagnostics", function()
             end)
         end)
 
+        describe("when there are no existing config files", function()
+            local vim_diagnostic
+            local vim_api_nvim_buf_get_text
+            local vim_api_nvim_buf_set_text
+            -- fixtures
+            local generator_params = {
+                cwd = vim.loop.cwd(),
+                ft = "lua",
+                bufnr = 1890,
+                row = "1",
+                col = 17,
+                get_config = function()
+                    return {
+                        config_file_preferred_name = ".cSpell.json",
+                        find_json = function(_)
+                            local path = Path:new("."):joinpath(".cSpell.json")
+                            if path:exists() then
+                                return path:absolute()
+                            end
+                        end,
+                    }
+                end,
+            }
+
+            before_each(function()
+                helpers.clear_cache()
+                vim_diagnostic = stub(vim.diagnostic, "get")
+                vim_diagnostic.returns(buf_diagnostics)
+                async_get_config_info = stub(helpers, "async_get_config_info")
+                vim_api_nvim_buf_get_text = stub(vim.api, "nvim_buf_get_text")
+                vim_api_nvim_buf_get_text.returns({ { misspelled } })
+                vim_api_nvim_buf_set_text = stub(vim.api, "nvim_buf_set_text")
+            end)
+            after_each(function()
+                vim_diagnostic:revert()
+                async_get_config_info:revert()
+                vim_api_nvim_buf_get_text:revert()
+                vim_api_nvim_buf_set_text:revert()
+                Path:new("./.cSpell.json"):rm()
+            end)
+
+            it("creates a new config file in cwd", function()
+                local add_to_json_action = get_add_to_json_action(generator_params)
+
+                assert.is_not_nil(add_to_json_action)
+                add_to_json_action.action({
+                    diagnostic = buf_diagnostics[1],
+                    word = misspelled,
+                    params = generator_params,
+                })
+                assert.truthy(Path:new("./.cSpell.json"):exists())
+            end)
+        end)
+
         describe("with read_config_synchronously = false,", function()
             local orig_config_str = Path:new(CSPELL_CONFIG_PATH):read()
             local config
             local vim_diagnostic
             local vim_api_nvim_buf_get_text
             local vim_api_nvim_buf_set_text
-            local misspelled = "variabl"
             local existing_word = "foo"
             local sync_get_config_info
             local vim_loop_new_async = vim.loop.new_async
 
             -- fixtures
-            local buf_diagnostics = {
-                {
-                    bufnr = 1890,
-                    col = 17,
-                    end_col = 24,
-                    end_lnum = 0,
-                    lnum = 0,
-                    message = string.format("Unknown word (%s)", misspelled),
-                    namespace = 35,
-                    row = "1",
-                    severity = 2,
-                    source = "cspell",
-                    user_data = {
-                        misspelled = misspelled,
-                        suggestions = { "variable", "variably", "varia", "varian", "variant" },
-                    },
-                },
-            }
             local generator_params = {
                 cwd = vim.loop.cwd(),
                 ft = "lua",
@@ -205,18 +273,6 @@ describe("diagnostics", function()
                     }
                 end,
             }
-
-            local get_add_to_json_action = function()
-                local add_to_json_action
-                local actions = code_actions.generator.fn(generator_params)
-                for _, action in ipairs(actions) do
-                    if action.title:match("cspell json file") then
-                        add_to_json_action = action
-                        break
-                    end
-                end
-                return add_to_json_action
-            end
 
             before_each(function()
                 helpers.clear_cache()
@@ -261,7 +317,7 @@ describe("diagnostics", function()
                 end)
 
                 it("can add the misspelled word to JSON via an action", function()
-                    local add_to_json_action = get_add_to_json_action()
+                    local add_to_json_action = get_add_to_json_action(generator_params)
 
                     assert.is_not_nil(add_to_json_action)
                     add_to_json_action.action({
@@ -294,7 +350,7 @@ describe("diagnostics", function()
                 end)
 
                 it("caches the misspelled word and adds it to JSON after reading", function()
-                    local add_to_json_action = get_add_to_json_action()
+                    local add_to_json_action = get_add_to_json_action(generator_params)
 
                     assert.is_not_nil(add_to_json_action)
                     add_to_json_action.action({
@@ -312,7 +368,7 @@ describe("diagnostics", function()
                     assert.stub(vim_api_nvim_buf_set_text).was_not_called()
 
                     async_get_config_info:revert()
-                    get_add_to_json_action()
+                    get_add_to_json_action(generator_params)
 
                     updated_config = vim.json.decode(Path:new(CSPELL_CONFIG_PATH):read())
                     assert.is_table(updated_config.words)

@@ -21,7 +21,8 @@ return function(opts)
         action = function()
             -- get a fresh config when the action is performed, which can be much later than when the action was generated
             local cspell = h.async_get_config_info(opts.params)
-            if not cspell and Path:new(h.get_config_path(opts.params)):exists() then
+            local config_path = h.get_config_path(opts.params)
+            if not cspell and config_path and Path:new(config_path):exists() then
                 h.cache_word_for_json(misspelled_word)
                 return
             end
