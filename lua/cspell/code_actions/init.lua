@@ -56,8 +56,11 @@ return make_builtin({
             params.cwd = params.cwd or vim.loop.cwd()
 
             ---@type CSpellSourceConfig
-            local code_action_config =
-                vim.tbl_extend("force", { read_config_synchronously = true }, params:get_config())
+            local code_action_config = vim.tbl_extend(
+                "force",
+                { read_config_synchronously = true },
+                params:get_config()
+            )
             local cspell = get_config_info(code_action_config, params)
 
             ---@type table<number, CodeAction>
@@ -71,8 +74,17 @@ return make_builtin({
             for _, diagnostic in ipairs(diagnostics) do
                 -- replace word with a suggestion
                 for _, suggestion in ipairs(diagnostic.user_data.suggestions) do
+                    local kind
+                    -- CSpell marks fixes with a trailing asterisk
+                    if suggestion:match("*$") then
+                        kind = "Fix"
+                        suggestion = string.sub(suggestion, 1, -2)
+                    else
+                        kind = "Suggestion"
+                    end
+
                     table.insert(actions, {
-                        title = string.format("Use %s", suggestion),
+                        title = string.format("%s: %s", kind, suggestion),
                         action = function()
                             h.set_word(diagnostic, suggestion)
 
