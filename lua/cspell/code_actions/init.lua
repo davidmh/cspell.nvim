@@ -56,11 +56,8 @@ return make_builtin({
             params.cwd = params.cwd or vim.loop.cwd()
 
             ---@type CSpellSourceConfig
-            local code_action_config = vim.tbl_extend(
-                "force",
-                { read_config_synchronously = true },
-                params:get_config()
-            )
+            local code_action_config =
+                vim.tbl_extend("force", { read_config_synchronously = true }, params:get_config())
             local cspell = get_config_info(code_action_config, params)
 
             ---@type table<number, CodeAction>
