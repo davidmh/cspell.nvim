@@ -86,7 +86,7 @@ return make_builtin({
                             h.set_word(diagnostic, suggestion)
 
                             local on_success = code_action_config.on_success
-                            local on_use_suggestion = code_action_config.on_success
+                            local on_use_suggestion = code_action_config.on_use_suggestion
 
                             if on_success then
                                 vim.notify_once(
