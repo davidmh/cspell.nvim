@@ -1,3 +1,4 @@
+local Path = require("plenary.path")
 local h = require("cspell.helpers")
 
 ---@class AddToDictionaryAction
@@ -27,7 +28,7 @@ return function(opts)
             if opts.dictionary == nil then
                 return
             end
-            local dictionary_path = vim.fn.expand(opts.dictionary.path)
+            local dictionary_path = Path:new(opts.cspell.path):parent():joinpath(opts.dictionary.path):absolute()
             local dictionary_ok, dictionary_body = pcall(vim.fn.readfile, dictionary_path)
             if not dictionary_ok then
                 vim.notify("Can't read " .. dictionary_path, vim.log.levels.ERROR, { title = "cspell.nvim" })
