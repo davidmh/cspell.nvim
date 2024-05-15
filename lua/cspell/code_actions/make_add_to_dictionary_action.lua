@@ -28,15 +28,17 @@ return function(opts)
             if opts.dictionary == nil then
                 return
             end
-            local dictionary_path = Path:new(opts.cspell.path):parent():joinpath(opts.dictionary.path):absolute()
-            local dictionary_ok, dictionary_body = pcall(vim.fn.readfile, dictionary_path)
+            local dictionary_path = Path:new(vim.fn.expand(opts.dictionary.path))
+            local resolved_path = dictionary_path:is_file() and dictionary_path:absolute()
+                or Path:new(opts.cspell.path):parent():joinpath(dictionary_path):absolute()
+            local dictionary_ok, dictionary_body = pcall(vim.fn.readfile, resolved_path)
             if not dictionary_ok then
-                vim.notify("Can't read " .. dictionary_path, vim.log.levels.ERROR, { title = "cspell.nvim" })
+                vim.notify("Can't read " .. resolved_path, vim.log.levels.ERROR, { title = "cspell.nvim" })
                 return
             end
             table.insert(dictionary_body, misspelled_word)
 
-            vim.fn.writefile(dictionary_body, dictionary_path)
+            vim.fn.writefile(dictionary_body, resolved_path)
             vim.notify(
                 'Added "' .. misspelled_word .. '" to ' .. opts.dictionary.path,
                 vim.log.levels.INFO,
