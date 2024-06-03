@@ -21,9 +21,14 @@ return function(opts)
     -- user_data. And only use the word from the range to trigger a new diagnostic.
     -- See: https://github.com/jose-elias-alvarez/null-ls.nvim/issues/1630
     local misspelled_word = opts.diagnostic.user_data.misspelled
+    local dictionary = opts.dictionary.name
+    local shortened_path = h.shorten_path(opts.cspell.path)
 
     return {
-        title = 'Add "' .. misspelled_word .. '" to dictionary "' .. opts.dictionary.name .. '"',
+        title = h.format(
+            'Add "${word}" to dictionary "${dictionary}" from "${config_path}"',
+            { word = misspelled_word, dictionary = dictionary, config_path = shortened_path }
+        ),
         action = function()
             if opts.dictionary == nil then
                 return
