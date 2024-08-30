@@ -19,33 +19,19 @@ return h.make_builtin({
         command = "cspell",
         ---@param params GeneratorParams
         args = function(params)
+            params.cwd = params.cwd or vim.loop.cwd()
+
             local cspell_args = {
                 "lint",
                 "--language-id",
                 params.ft,
                 "stdin://" .. params.bufname,
             }
-            params.cwd = params.cwd or vim.loop.cwd()
 
-            ---@type CSpellSourceConfig
-            local diagnostics_config = params and params:get_config() or {}
-
-            ---@type table<number|string, string>
-            local cspell_config_paths = {}
-
-            local cspell_config_directories = diagnostics_config.cspell_config_dirs or {}
-            table.insert(cspell_config_directories, params.cwd)
-
-            for _, cspell_config_directory in pairs(cspell_config_directories) do
-                local cspell_config_path = helpers.get_config_path(params, cspell_config_directory)
-                if cspell_config_path == nil then
-                    cspell_config_path = helpers.generate_cspell_config_path(params, cspell_config_directory)
-                end
-                cspell_config_paths[cspell_config_directory] = cspell_config_path
+            local config_path = helpers.get_config_path(params)
+            if config_path then
+                cspell_args = vim.list_extend({ "-c", config_path }, cspell_args)
             end
-            local merged_config = helpers.create_merged_cspell_json(params, cspell_config_paths)
-
-            cspell_args = vim.list_extend({ "-c", merged_config.path }, cspell_args)
 
             local code_action_source = require("null-ls.sources").get({
                 name = "cspell",
@@ -57,10 +43,11 @@ return h.make_builtin({
                 cspell_args = vim.list_extend({ "--show-suggestions" }, cspell_args)
 
                 local code_action_config = code_action_source.config or {}
+                local diagnostics_config = params and params:get_config() or {}
 
                 if helpers.matching_configs(code_action_config, diagnostics_config) then
                     -- warm up the config cache so we have the config ready by the time we call the code action
-                    helpers.async_get_config_info(params, cspell_config_paths[params.cwd])
+                    helpers.async_get_config_info(params)
                 elseif needs_warning then
                     needs_warning = false
                     vim.notify(

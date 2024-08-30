@@ -10,8 +10,3 @@ luassert
 realpath
 neotest
 Neovim
-stdpath
-joinpath
-fnamemodify
-itable
-fnameescape

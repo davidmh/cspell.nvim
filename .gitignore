@@ -6,4 +6,3 @@
 !.yarn/versions
 node_modules/
 .tests/
-.direnv

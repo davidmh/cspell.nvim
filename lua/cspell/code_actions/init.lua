@@ -23,16 +23,15 @@ end
 
 ---@param code_action_config CSpellSourceConfig
 ---@param params GeneratorParams
----@param cspell_json_path string
-local get_config_info = function(code_action_config, params, cspell_json_path)
+local get_config_info = function(code_action_config, params)
     -- In theory, the call to async_get_config_info in the diagnostics source
     -- should already have been loaded, that's why we're defaulting reading the
     -- config synchronously here.
     if code_action_config.read_config_synchronously then
-        return h.sync_get_config_info(params, cspell_json_path)
+        return h.sync_get_config_info(params)
     end
 
-    return h.async_get_config_info(params, cspell_json_path)
+    return h.async_get_config_info(params)
 end
 
 return make_builtin({
@@ -59,22 +58,7 @@ return make_builtin({
             ---@type CSpellSourceConfig
             local code_action_config =
                 vim.tbl_extend("force", { read_config_synchronously = true }, params:get_config())
-
-            ---@type table<number|string, string>
-            local cspell_config_paths = {}
-
-            local cspell_config_directories = code_action_config.cspell_config_dirs or {}
-            table.insert(cspell_config_directories, params.cwd)
-
-            for _, cspell_config_directory in pairs(cspell_config_directories) do
-                local cspell_config_path = h.get_config_path(params, cspell_config_directory)
-                if cspell_config_path == nil then
-                    cspell_config_path = h.generate_cspell_config_path(params, cspell_config_directory)
-                end
-                cspell_config_paths[cspell_config_directory] = cspell_config_path
-            end
-
-            local default_cspell_config = get_config_info(code_action_config, params, cspell_config_paths[params.cwd])
+            local cspell = get_config_info(code_action_config, params)
 
             ---@type table<number, CodeAction>
             local actions = {}
@@ -110,11 +94,7 @@ return make_builtin({
                                     vim.log.levels.INFO,
                                     { title = "cspell.nvim" }
                                 )
-                                on_success(
-                                    default_cspell_config and default_cspell_config.path,
-                                    params,
-                                    "use_suggestion"
-                                )
+                                on_success(cspell and cspell.path, params, "use_suggestion")
                             end
 
                             if on_use_suggestion then
@@ -122,7 +102,7 @@ return make_builtin({
                                 local payload = {
                                     misspelled_word = diagnostic.user_data.misspelled,
                                     suggestion = suggestion,
-                                    cspell_config_path = default_cspell_config and default_cspell_config.path,
+                                    cspell_config_path = cspell and cspell.path,
                                     generator_params = params,
                                 }
                                 on_use_suggestion(payload)
@@ -132,40 +112,34 @@ return make_builtin({
                 end
 
                 local word = h.get_word(diagnostic)
-                local dictionary_cspell_configs = {}
 
-                for _, cspell_config_path in pairs(cspell_config_paths) do
-                    -- add word to "words" in cspell.json
-                    table.insert(
-                        actions,
-                        make_add_to_json({
-                            diagnostic = diagnostic,
-                            word = word,
-                            params = params,
-                            cspell_config_path = cspell_config_path,
-                        })
-                    )
-                    local cspell_config = get_config_info(code_action_config, params, cspell_config_path)
-                    if cspell_config and cspell_config.config.dictionaryDefinitions then
-                        dictionary_cspell_configs[cspell_config_path] = cspell_config
-                    end
+                -- add word to "words" in cspell.json
+                table.insert(
+                    actions,
+                    make_add_to_json({
+                        diagnostic = diagnostic,
+                        word = word,
+                        params = params,
+                    })
+                )
+
+                if cspell == nil then
+                    break
                 end
 
                 -- add word to a custom dictionary
-                for _, cspell_config in pairs(dictionary_cspell_configs) do
-                    for _, dictionary in ipairs(cspell_config.config.dictionaryDefinitions) do
-                        if dictionary ~= nil and dictionary.addWords then
-                            table.insert(
-                                actions,
-                                make_add_to_dictionary_action({
-                                    diagnostic = diagnostic,
-                                    word = word,
-                                    params = params,
-                                    cspell = cspell_config,
-                                    dictionary = dictionary,
-                                })
-                            )
-                        end
+                for _, dictionary in ipairs(cspell.config.dictionaryDefinitions or {}) do
+                    if dictionary ~= nil and dictionary.addWords then
+                        table.insert(
+                            actions,
+                            make_add_to_dictionary_action({
+                                diagnostic = diagnostic,
+                                word = word,
+                                params = params,
+                                cspell = cspell,
+                                dictionary = dictionary,
+                            })
+                        )
                     end
                 end
             end
