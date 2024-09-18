@@ -74,7 +74,18 @@ M.create_merged_cspell_json = function(params, cspell_config_mapping)
     end
 
     for _, cspell_config_path in pairs(cspell_config_mapping) do
-        table.insert(cspell_config_paths, cspell_config_path)
+        local path_exists = cspell_config_path ~= nil
+            and cspell_config_path ~= ""
+            and Path:new(cspell_config_path):exists()
+        if path_exists then
+            table.insert(cspell_config_paths, cspell_config_path)
+        else
+            local debug_message = M.format(
+                'Unable to find file at "${file_path}", skipping adding to merged cspell config.',
+                { file_path = cspell_config_path }
+            )
+            logger:debug(debug_message)
+        end
     end
 
     local cspell_json = {
