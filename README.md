@@ -56,11 +56,18 @@ local config = {
   -- See the currently supported files in https://github.com/davidmh/cspell.nvim/blob/main/lua/cspell/helpers.lua
   config_file_preferred_name = 'cspell.json',
 
+  -- A list of directories that contain additional cspell.json config files or
+  -- support the creation of a new config file from a code action
+  --
+  -- looks for a cspell config in the ~/.config/ directory, or creates a file in the directory
+  -- using 'config_file_preferred_name' when a code action for one of the locations is selected
+  cspell_config_dirs = { "~/.config/" }
+
   --- A way to define your own logic to find the CSpell configuration file.
-  ---@params cwd The same current working directory defined in the source,
+  ---@params directory The same directory defined in the source,
   --             defaulting to vim.loop.cwd()
   ---@return string|nil The path of the json file
-  find_json = function(cwd)
+  find_json = function(directory)
   end,
 
   -- Will find and read the cspell config file synchronously, as soon as the
