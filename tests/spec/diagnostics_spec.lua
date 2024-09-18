@@ -178,35 +178,82 @@ describe("diagnostics", function()
                 Path:new(CSPELL_MERGED_CONFIG_PATH):rm({})
             end)
 
-            it("includes a suggestions param", function()
-                args = args_fn({
-                    ft = "lua",
-                    bufname = "file.txt",
-                    get_config = function()
-                        return {
-                            find_json = function()
-                                return "some/custom/path/cspell.json"
-                            end,
-                        }
-                    end,
-                })
+            describe("not found", function()
+                before_each(function()
+                    Path:new("some/custom/path/cspell.json"):rm()
+                end)
+                it("includes a suggestions param", function()
+                    args = args_fn({
+                        ft = "lua",
+                        bufname = "file.txt",
+                        get_config = function()
+                            return {
+                                find_json = function()
+                                    return "some/custom/path/cspell.json"
+                                end,
+                            }
+                        end,
+                    })
 
-                assert.same({
-                    "-c",
-                    CSPELL_MERGED_CONFIG_PATH,
-                    "lint",
-                    "--language-id",
-                    "lua",
-                    "stdin://file.txt",
-                }, args)
+                    assert.same({
+                        "-c",
+                        CSPELL_MERGED_CONFIG_PATH,
+                        "lint",
+                        "--language-id",
+                        "lua",
+                        "stdin://file.txt",
+                    }, args)
 
-                local merged_config = vim.json.decode(Path:new(CSPELL_MERGED_CONFIG_PATH):read())
+                    local merged_config = vim.json.decode(Path:new(CSPELL_MERGED_CONFIG_PATH):read())
 
-                assert.is_table(merged_config)
-                assert.truthy(merged_config["import"] ~= nil)
+                    assert.is_table(merged_config)
+                    assert.is_not_nil(merged_config["import"])
 
-                assert.is_table(merged_config.import)
-                assert.truthy(vim.tbl_contains(merged_config.import, "some/custom/path/cspell.json"))
+                    assert.falsy(vim.tbl_contains(merged_config.import, "some/custom/path/cspell.json"))
+                end)
+            end)
+
+            describe("found", function()
+                local orig_config_str = Path:new(CSPELL_CONFIG_PATH):read()
+                local config = vim.json.decode(orig_config_str)
+                local custom_path = Path:new("some/custom/path/cspell.json")
+                before_each(function()
+                    custom_path:touch({ parents = true })
+                    custom_path:write(vim.json.encode(config), "w")
+                end)
+
+                after_each(function()
+                    Path:new("some"):rm({ recursive = true })
+                end)
+                it("includes a suggestions param", function()
+                    args = args_fn({
+                        ft = "lua",
+                        bufname = "file.txt",
+                        get_config = function()
+                            return {
+                                find_json = function()
+                                    return "some/custom/path/cspell.json"
+                                end,
+                            }
+                        end,
+                    })
+
+                    assert.same({
+                        "-c",
+                        CSPELL_MERGED_CONFIG_PATH,
+                        "lint",
+                        "--language-id",
+                        "lua",
+                        "stdin://file.txt",
+                    }, args)
+
+                    local merged_config = vim.json.decode(Path:new(CSPELL_MERGED_CONFIG_PATH):read())
+
+                    assert.is_table(merged_config)
+                    assert.is_not_nil(merged_config["import"])
+
+                    assert.same(merged_config.import, { "some/custom/path/cspell.json" })
+                end)
             end)
         end)
 
