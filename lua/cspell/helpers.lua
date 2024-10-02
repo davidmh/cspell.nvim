@@ -238,7 +238,9 @@ M.get_cspell_config = function(params, cspell_json_path)
     local ok, cspell_config = pcall(decode_json, content)
 
     if not ok then
-        vim.notify("\nCannot parse cspell json file as JSON.\n", vim.log.levels.ERROR, { title = "cspell.nvim" })
+        vim.schedule(function()
+            vim.notify("\nCannot parse cspell json file as JSON.\n", vim.log.levels.ERROR, { title = "cspell.nvim" })
+        end)
         return
     end
 
