@@ -23,8 +23,8 @@ local create_cspell_json = function(params, cspell_json, cspell_json_file_path)
     local cspell_json_str = encode_json(cspell_json)
 
     local cspell_json_directory_path = vim.fs.dirname(cspell_json_file_path)
-    Path:new(cspell_json_directory_path):mkdir({ parents = true })
-    Path:new(cspell_json_file_path):write(cspell_json_str, "w")
+    vim.fn.mkdir(cspell_json_directory_path, "p")
+    vim.fn.writefile({ cspell_json_str }, cspell_json_file_path)
 
     local debug_message =
         M.format('Created a new cspell.json file at "${file_path}"', { file_path = cspell_json_file_path })
@@ -60,7 +60,7 @@ end
 M.get_merged_cspell_json_path = function(params)
     local vim_cache = vim.fn.stdpath("cache")
     local plugin_name = "cspell.nvim"
-    local merged_config_key = Path:new(params.cwd):joinpath("cspell.json"):absolute():gsub("/", "%%")
+    local merged_config_key = Path:new(params.cwd):joinpath("cspell.json"):absolute():gsub("/", "-"):gsub(":", "")
     local merged_config_path = Path:new(vim_cache):joinpath(plugin_name):joinpath(merged_config_key):absolute()
 
     return merged_config_path
