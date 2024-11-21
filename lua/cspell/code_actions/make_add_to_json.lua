@@ -35,6 +35,10 @@ return function(opts)
 
             cspell = cspell or h.create_default_cspell_json(opts.params, cspell_config_path)
 
+            if not path_exists then
+                pcall(h.update_merged_config_imports, opts.params, cspell_config_path)
+            end
+
             if not cspell.config.words then
                 cspell.config.words = {}
             end

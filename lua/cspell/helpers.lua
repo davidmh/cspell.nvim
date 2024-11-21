@@ -56,16 +56,22 @@ local set_compare = function(expected_values, new_values)
     return true
 end
 
+---@param params GeneratorParams
+M.get_merged_cspell_json_path = function(params)
+    local vim_cache = vim.fn.stdpath("cache")
+    local plugin_name = "cspell.nvim"
+    local merged_config_key = Path:new(params.cwd):joinpath("cspell.json"):absolute():gsub("/", "%%")
+    local merged_config_path = Path:new(vim_cache):joinpath(plugin_name):joinpath(merged_config_key):absolute()
+
+    return merged_config_path
+end
+
 --- create a merged cspell.json file that imports all cspell configs defined in cspell_config_dirs
 ---@param params GeneratorParams
 ---@param cspell_config_mapping table<number|string, string>
 ---@return CSpellConfigInfo
 M.create_merged_cspell_json = function(params, cspell_config_mapping)
-    local vim_cache = vim.fn.stdpath("cache")
-    local plugin_name = "cspell.nvim"
-
-    local merged_config_key = Path:new(params.cwd):joinpath("cspell.json"):absolute():gsub("/", "%%")
-    local merged_config_path = Path:new(vim_cache):joinpath(plugin_name):joinpath(merged_config_key):absolute()
+    local merged_config_path = M.get_merged_cspell_json_path(params)
 
     local cspell_config_paths = {}
 
@@ -109,6 +115,19 @@ M.create_merged_cspell_json = function(params, cspell_config_mapping)
     end
 
     return create_cspell_json(params, cspell_json, merged_config_path)
+end
+
+--- Update the import field from a merged config file
+---@param params GeneratorParams
+---@param cspell_config_path string
+function M.update_merged_config_imports(params, cspell_config_path)
+    local merged_config_path = M.get_merged_cspell_json_path(params)
+    local merged_config = vim.json.decode(Path:new(merged_config_path):read())
+
+    merged_config.import = merged_config.import or {}
+    table.insert(merged_config.import, cspell_config_path)
+
+    Path:new(merged_config_path):write(vim.json.encode(merged_config), "w")
 end
 
 --- create a bare minimum cspell.json file

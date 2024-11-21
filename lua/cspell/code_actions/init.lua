@@ -1,4 +1,5 @@
 local make_builtin = require("null-ls.helpers").make_builtin
+local u = require("null-ls.utils")
 local methods = require("null-ls.methods")
 local h = require("cspell.helpers")
 local make_add_to_json = require("cspell.code_actions.make_add_to_json")
@@ -54,7 +55,7 @@ return make_builtin({
         ---@param params GeneratorParams
         ---@return table<number, CodeAction>
         fn = function(params)
-            params.cwd = params.cwd or vim.loop.cwd()
+            params.cwd = params.cwd or u.get_root()
 
             ---@type CSpellSourceConfig
             local code_action_config =
