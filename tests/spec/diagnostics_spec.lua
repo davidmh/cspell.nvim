@@ -11,7 +11,7 @@ local uv = vim.loop
 
 local CSPELL_CONFIG_PATH = uv.fs_realpath("./cspell.json")
 
-local CACHE_KEY = Path:new("."):joinpath("cspell.json"):absolute():gsub("/", "%%")
+local CACHE_KEY = Path:new("."):joinpath("cspell.json"):absolute():gsub("/", "-"):gsub(":", "")
 
 local CSPELL_MERGED_CONFIG_PATH = Path:new(".tests/cache/nvim/cspell.nvim"):joinpath(CACHE_KEY):expand()
 
