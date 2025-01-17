@@ -79,11 +79,29 @@ M.create_merged_cspell_json = function(params, cspell_config_mapping)
         return CONFIG_INFO_BY_PATH[merged_config_path]
     end
 
+    local cspell_json = {
+        version = "0.2",
+        language = "en",
+        words = {},
+        flagWords = {},
+        import = cspell_config_paths,
+    }
+
     for _, cspell_config_path in pairs(cspell_config_mapping) do
         local path_exists = cspell_config_path ~= nil
             and cspell_config_path ~= ""
             and Path:new(cspell_config_path):exists()
         if path_exists then
+            pcall(function()
+                local cspell_config = vim.json.decode(Path:new(cspell_config_path):read())
+                if
+                    cspell_config.language ~= nil
+                    and type(cspell_config.language) == "string"
+                    and cspell_config.language ~= ''
+                then
+                    cspell_json.language = cspell_json.language .. "," .. cspell_config.language
+                end
+            end)
             table.insert(cspell_config_paths, cspell_config_path)
         else
             local debug_message = M.format(
@@ -93,14 +111,6 @@ M.create_merged_cspell_json = function(params, cspell_config_mapping)
             logger:debug(debug_message)
         end
     end
-
-    local cspell_json = {
-        version = "0.2",
-        language = "en",
-        words = {},
-        flagWords = {},
-        import = cspell_config_paths,
-    }
 
     local existing_config = M.get_cspell_config(params, merged_config_path)
 
@@ -219,8 +229,8 @@ M.generate_cspell_config_path = function(params, directory)
     if not vim.tbl_contains(CSPELL_CONFIG_FILES, config_file_preferred_name) then
         vim.notify(
             "Invalid config_file_preferred_name for cspell json file: "
-                .. config_file_preferred_name
-                .. '. The name "cspell.json" will be used instead',
+            .. config_file_preferred_name
+            .. '. The name "cspell.json" will be used instead',
             vim.log.levels.WARN,
             { title = "cspell.nvim" }
         )
