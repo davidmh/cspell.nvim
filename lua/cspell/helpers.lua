@@ -92,16 +92,14 @@ M.create_merged_cspell_json = function(params, cspell_config_mapping)
             and cspell_config_path ~= ""
             and Path:new(cspell_config_path):exists()
         if path_exists then
-            pcall(function()
-                local cspell_config = vim.json.decode(Path:new(cspell_config_path):read())
-                if
-                    cspell_config.language ~= nil
-                    and type(cspell_config.language) == "string"
-                    and cspell_config.language ~= ''
-                then
-                    cspell_json.language = cspell_json.language .. "," .. cspell_config.language
-                end
-            end)
+            local ok, cspell_config = pcall(vim.json.decode, Path:new(cspell_config_path):read())
+            if ok
+                and cspell_config.language ~= nil
+                and type(cspell_config.language) == "string"
+                and cspell_config.language ~= ''
+            then
+                cspell_json.language = cspell_json.language .. "," .. cspell_config.language
+            end
             table.insert(cspell_config_paths, cspell_config_path)
         else
             local debug_message = M.format(
