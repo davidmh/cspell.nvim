@@ -84,7 +84,8 @@ end
 M.get_merged_cspell_json_path = function(params)
     local vim_cache = vim.fn.stdpath("cache")
     local plugin_name = "cspell.nvim"
-    local merged_config_key = Path:new(params.cwd):joinpath("cspell.json"):absolute():gsub("/", "-"):gsub(":", "")
+    local merged_config_key =
+        Path:new(vim.fn.getcwd(-1, -1)):joinpath("cspell.json"):absolute():gsub("\\", "-"):gsub("/", "-"):gsub(":", "")
     local merged_config_path = Path:new(vim_cache):joinpath(plugin_name):joinpath(merged_config_key):absolute()
 
     return merged_config_path
