@@ -16,6 +16,8 @@ local CONFIG_INFO_BY_PATH = {}
 ---@type table<string, string|nil>
 local PATH_BY_DIRECTORY = {}
 
+local last_working_directory = ""
+
 local cspell_config_read_languages = function(cspell_config_path)
     local language_list = {}
     local ok, cspell_config = pcall(vim.json.decode, Path:new(cspell_config_path):read())
@@ -97,10 +99,14 @@ end
 ---@return CSpellConfigInfo
 M.create_merged_cspell_json = function(params, cspell_config_mapping)
     local merged_config_path = M.get_merged_cspell_json_path(params)
+    local force_rewrite = params:get_config().reload_on_cwd_change and last_working_directory ~= vim.fn.getcwd(-1, -1)
+    if force_rewrite then
+        last_working_directory = vim.fn.getcwd(-1, -1)
+    end
 
     local cspell_config_paths = {}
 
-    if CONFIG_INFO_BY_PATH[merged_config_path] ~= nil then
+    if not force_rewrite and CONFIG_INFO_BY_PATH[merged_config_path] ~= nil then
         return CONFIG_INFO_BY_PATH[merged_config_path]
     end
 
@@ -135,16 +141,18 @@ M.create_merged_cspell_json = function(params, cspell_config_mapping)
         flagWords = {},
         import = cspell_config_paths,
     }
+    if not force_rewrite then
+        local existing_config = M.get_cspell_config(params, merged_config_path)
+        if existing_config ~= nil then
+            local existing_import_set = set_create(existing_config.config.import)
+            local new_import_set = set_create(cspell_json.import)
 
-    local existing_config = M.get_cspell_config(params, merged_config_path)
-
-    if existing_config ~= nil then
-        local existing_import_set = set_create(existing_config.config.import)
-        local new_import_set = set_create(cspell_json.import)
-
-        if set_compare(existing_import_set, new_import_set) and set_compare(new_import_set, existing_import_set) then
-            CONFIG_INFO_BY_PATH[merged_config_path] = existing_config
-            return CONFIG_INFO_BY_PATH[merged_config_path]
+            if
+                set_compare(existing_import_set, new_import_set) and set_compare(new_import_set, existing_import_set)
+            then
+                CONFIG_INFO_BY_PATH[merged_config_path] = existing_config
+                return CONFIG_INFO_BY_PATH[merged_config_path]
+            end
         end
     end
 

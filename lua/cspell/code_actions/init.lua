@@ -1,5 +1,4 @@
 local make_builtin = require("null-ls.helpers").make_builtin
-local u = require("null-ls.utils")
 local methods = require("null-ls.methods")
 local h = require("cspell.helpers")
 local make_add_to_json = require("cspell.code_actions.make_add_to_json")
@@ -55,8 +54,6 @@ return make_builtin({
         ---@param params GeneratorParams
         ---@return table<number, CodeAction>
         fn = function(params)
-            params.cwd = params.cwd or u.get_root()
-
             ---@type CSpellSourceConfig
             local code_action_config =
                 vim.tbl_extend("force", { read_config_synchronously = true }, params:get_config())
@@ -65,7 +62,7 @@ return make_builtin({
             local cspell_config_paths = {}
 
             local cspell_config_directories = code_action_config.cspell_config_dirs or {}
-            table.insert(cspell_config_directories, params.cwd)
+            table.insert(cspell_config_directories, vim.fn.getcwd(-1, -1))
 
             for _, cspell_config_directory in pairs(cspell_config_directories) do
                 local cspell_config_path = h.get_config_path(params, cspell_config_directory)
