@@ -1,4 +1,5 @@
 local h = require("null-ls.helpers")
+local u = require("null-ls.utils")
 local methods = require("null-ls.methods")
 local helpers = require("cspell.helpers")
 local parser = require("cspell.diagnostics.parser")
@@ -25,6 +26,7 @@ return h.make_builtin({
                 params.ft,
                 "stdin://" .. params.bufname,
             }
+            helpers.update_params_cwd(params)
 
             ---@type CSpellSourceConfig
             local diagnostics_config = params and params:get_config() or {}
@@ -33,7 +35,7 @@ return h.make_builtin({
             local cspell_config_paths = {}
 
             local cspell_config_directories = diagnostics_config.cspell_config_dirs or {}
-            table.insert(cspell_config_directories, vim.fn.getcwd(-1, -1))
+            table.insert(cspell_config_directories, params.cwd)
 
             for _, cspell_config_directory in pairs(cspell_config_directories) do
                 local cspell_config_path = helpers.get_config_path(params, cspell_config_directory)
@@ -59,7 +61,7 @@ return h.make_builtin({
 
                 if helpers.matching_configs(code_action_config, diagnostics_config) then
                     -- warm up the config cache so we have the config ready by the time we call the code action
-                    helpers.async_get_config_info(params, cspell_config_paths[vim.fn.getcwd(-1, -1)])
+                    helpers.async_get_config_info(params, cspell_config_paths[params.cwd])
                 elseif needs_warning then
                     needs_warning = false
                     vim.notify(

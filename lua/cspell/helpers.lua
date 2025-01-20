@@ -1,5 +1,6 @@
 local Path = require("plenary.path")
 local logger = require("null-ls.logger")
+local u = require("null-ls.utils")
 
 local M = {}
 local CACHED_JSON_WORDS = {}
@@ -16,7 +17,7 @@ local CONFIG_INFO_BY_PATH = {}
 ---@type table<string, string|nil>
 local PATH_BY_DIRECTORY = {}
 
-local last_working_directory = ""
+local last_session_id = ""
 
 local cspell_config_read_languages = function(cspell_config_path)
     local language_list = {}
@@ -87,7 +88,7 @@ M.get_merged_cspell_json_path = function(params)
     local vim_cache = vim.fn.stdpath("cache")
     local plugin_name = "cspell.nvim"
     local merged_config_key =
-        Path:new(vim.fn.getcwd(-1, -1)):joinpath("cspell.json"):absolute():gsub("\\", "-"):gsub("/", "-"):gsub(":", "")
+        Path:new(params.cwd):joinpath("cspell.json"):absolute():gsub("\\", "-"):gsub("/", "-"):gsub(":", "")
     local merged_config_path = Path:new(vim_cache):joinpath(plugin_name):joinpath(merged_config_key):absolute()
 
     return merged_config_path
@@ -99,17 +100,12 @@ end
 ---@return CSpellConfigInfo
 M.create_merged_cspell_json = function(params, cspell_config_mapping)
     local merged_config_path = M.get_merged_cspell_json_path(params)
-    local force_rewrite = params:get_config().reload_on_cwd_change and last_working_directory ~= vim.fn.getcwd(-1, -1)
-    if force_rewrite then
-        last_working_directory = vim.fn.getcwd(-1, -1)
-    end
 
-    local cspell_config_paths = {}
-
-    if not force_rewrite and CONFIG_INFO_BY_PATH[merged_config_path] ~= nil then
+    if CONFIG_INFO_BY_PATH[merged_config_path] ~= nil then
         return CONFIG_INFO_BY_PATH[merged_config_path]
     end
 
+    local cspell_config_paths = {}
     local language_list = {}
     for _, cspell_config_path in pairs(cspell_config_mapping) do
         local path_exists = cspell_config_path ~= nil
@@ -141,18 +137,14 @@ M.create_merged_cspell_json = function(params, cspell_config_mapping)
         flagWords = {},
         import = cspell_config_paths,
     }
-    if not force_rewrite then
-        local existing_config = M.get_cspell_config(params, merged_config_path)
-        if existing_config ~= nil then
-            local existing_import_set = set_create(existing_config.config.import)
-            local new_import_set = set_create(cspell_json.import)
+    local existing_config = M.get_cspell_config(params, merged_config_path)
+    if existing_config ~= nil then
+        local existing_import_set = set_create(existing_config.config.import)
+        local new_import_set = set_create(cspell_json.import)
 
-            if
-                set_compare(existing_import_set, new_import_set) and set_compare(new_import_set, existing_import_set)
-            then
-                CONFIG_INFO_BY_PATH[merged_config_path] = existing_config
-                return CONFIG_INFO_BY_PATH[merged_config_path]
-            end
+        if set_compare(existing_import_set, new_import_set) and set_compare(new_import_set, existing_import_set) then
+            CONFIG_INFO_BY_PATH[merged_config_path] = existing_config
+            return CONFIG_INFO_BY_PATH[merged_config_path]
         end
     end
 
@@ -391,6 +383,18 @@ M.set_word = function(diagnostic, new_word)
         diagnostic.end_col,
         { new_word }
     )
+end
+
+---@param params GeneratorParams
+---@return nil
+M.update_params_cwd = function(params)
+    if params:get_config().reload_on_session_change and last_session_id ~= vim.v.this_session then
+        last_session_id = vim.v.this_session
+        params.cwd = u.get_root()
+        M.clear_cache()
+    else
+        params.cwd = params.cwd or u.get_root()
+    end
 end
 
 M.clear_cache = function()
