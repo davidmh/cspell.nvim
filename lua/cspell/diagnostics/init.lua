@@ -30,7 +30,7 @@ return h.make_builtin({
             local diagnostics_config = params and params:get_config() or {}
 
             ---@type table<number|string, string>
-            local cspell_config_paths = {}
+            local cspell_config_paths = params and params:get_config().cspell_import_files or {}
 
             local cspell_config_directories = diagnostics_config.cspell_config_dirs or {}
             table.insert(cspell_config_directories, vim.fn.getcwd(-1, -1))
