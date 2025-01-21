@@ -1,6 +1,6 @@
 local make_builtin = require("null-ls.helpers").make_builtin
 local methods = require("null-ls.methods")
-local h = require("cspell.helpers")
+local helpers = require("cspell.helpers")
 local make_add_to_json = require("cspell.code_actions.make_add_to_json")
 local make_add_to_dictionary_action = require("cspell.code_actions.make_add_to_dictionary_action")
 
@@ -29,10 +29,10 @@ local get_config_info = function(code_action_config, params, cspell_json_path)
     -- should already have been loaded, that's why we're defaulting reading the
     -- config synchronously here.
     if code_action_config.read_config_synchronously then
-        return h.sync_get_config_info(params, cspell_json_path)
+        return helpers.sync_get_config_info(params, cspell_json_path)
     end
 
-    return h.async_get_config_info(params, cspell_json_path)
+    return helpers.async_get_config_info(params, cspell_json_path)
 end
 
 return make_builtin({
@@ -54,6 +54,8 @@ return make_builtin({
         ---@param params GeneratorParams
         ---@return table<number, CodeAction>
         fn = function(params)
+            helpers.update_params_cwd(params)
+
             ---@type CSpellSourceConfig
             local code_action_config =
                 vim.tbl_extend("force", { read_config_synchronously = true }, params:get_config())
@@ -62,12 +64,12 @@ return make_builtin({
             local cspell_config_paths = {}
 
             local cspell_config_directories = code_action_config.cspell_config_dirs or {}
-            table.insert(cspell_config_directories, vim.fn.getcwd(-1, -1))
+            table.insert(cspell_config_directories, params.cwd)
 
             for _, cspell_config_directory in pairs(cspell_config_directories) do
-                local cspell_config_path = h.get_config_path(params, cspell_config_directory)
+                local cspell_config_path = helpers.get_config_path(params, cspell_config_directory)
                 if cspell_config_path == nil then
-                    cspell_config_path = h.generate_cspell_config_path(params, cspell_config_directory)
+                    cspell_config_path = helpers.generate_cspell_config_path(params, cspell_config_directory)
                 end
                 cspell_config_paths[cspell_config_directory] = cspell_config_path
             end
@@ -97,7 +99,7 @@ return make_builtin({
                     table.insert(actions, {
                         title = string.format("%s: %s", kind, suggestion),
                         action = function()
-                            h.set_word(diagnostic, suggestion)
+                            helpers.set_word(diagnostic, suggestion)
 
                             local on_success = code_action_config.on_success
                             local on_use_suggestion = code_action_config.on_use_suggestion
@@ -129,7 +131,7 @@ return make_builtin({
                     })
                 end
 
-                local word = h.get_word(diagnostic)
+                local word = helpers.get_word(diagnostic)
                 local dictionary_cspell_configs = {}
 
                 for _, cspell_config_path in pairs(cspell_config_paths) do
