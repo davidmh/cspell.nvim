@@ -17,8 +17,6 @@ local CONFIG_INFO_BY_PATH = {}
 ---@type table<string, string|nil>
 local PATH_BY_DIRECTORY = {}
 
-local last_session_id = ""
-
 local cspell_config_read_languages = function(cspell_config_path)
     local language_list = {}
     local ok, cspell_config = pcall(vim.json.decode, Path:new(cspell_config_path):read())
@@ -94,17 +92,9 @@ M.get_merged_cspell_json_path = function(params)
     return merged_config_path
 end
 
---- create a merged cspell.json file that imports all cspell configs defined in cspell_config_dirs
----@param params GeneratorParams
 ---@param cspell_config_mapping table<number|string, string>
----@return CSpellConfigInfo
-M.create_merged_cspell_json = function(params, cspell_config_mapping)
-    local merged_config_path = M.get_merged_cspell_json_path(params)
-
-    if CONFIG_INFO_BY_PATH[merged_config_path] ~= nil then
-        return CONFIG_INFO_BY_PATH[merged_config_path]
-    end
-
+---@return CSpellConfig
+local get_merged_cspell_json = function(cspell_config_mapping)
     local cspell_config_paths = {}
     local language_list = {}
     for _, cspell_config_path in pairs(cspell_config_mapping) do
@@ -130,13 +120,33 @@ M.create_merged_cspell_json = function(params, cspell_config_mapping)
         languages = "en"
     end
 
-    local cspell_json = {
+    return {
         version = "0.2",
         language = languages,
         words = {},
         flagWords = {},
         import = cspell_config_paths,
     }
+end
+
+--- create a merged cspell.json file that imports all cspell configs defined in cspell_config_dirs
+---@param params GeneratorParams
+---@param cspell_config_mapping table<number|string, string>
+---@param force_rewrite boolean
+---@return CSpellConfigInfo
+M.create_merged_cspell_json = function(params, cspell_config_mapping, force_rewrite)
+    local merged_config_path = M.get_merged_cspell_json_path(params)
+
+    if force_rewrite then
+        local cspell_json = get_merged_cspell_json(cspell_config_mapping)
+        return create_cspell_json(params, cspell_json, merged_config_path)
+    end
+
+    if CONFIG_INFO_BY_PATH[merged_config_path] ~= nil then
+        return CONFIG_INFO_BY_PATH[merged_config_path]
+    end
+
+    local cspell_json = get_merged_cspell_json(cspell_config_mapping)
     local existing_config = M.get_cspell_config(params, merged_config_path)
     if existing_config ~= nil then
         local existing_import_set = set_create(existing_config.config.import)
@@ -261,7 +271,7 @@ M.generate_cspell_config_path = function(params, directory)
         config_file_preferred_name = "cspell.json"
     end
 
-    local config_path = require("null-ls.utils").path.join(directory, config_file_preferred_name)
+    local config_path = u.path.join(directory, config_file_preferred_name)
     return vim.fs.normalize(config_path)
 end
 
@@ -386,14 +396,26 @@ M.set_word = function(diagnostic, new_word)
 end
 
 ---@param params GeneratorParams
----@return nil
+---@return boolean
+local reset_cspell = function(params)
+    return params:get_config().reset_cspell and params:get_config().reset_cspell(params)
+end
+
+---@param params GeneratorParams
+---@return string
+local get_cwd = function(params)
+    return params:get_config().cwd and params:get_config().cwd(params) or u.get_root()
+end
+
+---@param params GeneratorParams
+---@return boolean
 M.update_params_cwd = function(params)
-    if params:get_config().reload_on_session_change and last_session_id ~= vim.v.this_session then
-        last_session_id = vim.v.this_session
-        params.cwd = u.get_root()
+    params.cwd = get_cwd(params)
+    if reset_cspell(params) then
         M.clear_cache()
+        return true
     else
-        params.cwd = params.cwd or u.get_root()
+        return false
     end
 end
 
@@ -464,6 +486,9 @@ return M
 ---@class CSpellSourceConfig
 ---@field config_file_preferred_name string|nil
 ---@field cspell_config_dirs table|nil
+---@field cwd function|nil
+---@field reset_cspell function|nil
+---@field cspell_import_files function|nil
 --- Will find and read the cspell config file synchronously, as soon as the
 --- code actions generator gets called.
 ---
