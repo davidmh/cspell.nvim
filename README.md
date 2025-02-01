@@ -3,6 +3,34 @@
 A companion plugin for [nvimtools/none-ls.nvim](https://github.com/nvimtools/none-ls.nvim),
 adding support for [cspell] diagnostics and code actions.
 
+## How to setup in lazyvim
+
+Make sure you have `cpsell` installed, and then add the following
+to your plugin configuration directory.
+
+```lua
+return {
+  {
+    "nvimtools/none-ls.nvim",
+    event = "VeryLazy",
+    depends = { "davidmh/cspell.nvim" },
+    opts = function(_, opts)
+      local cspell = require("cspell")
+      opts.sources = opts.sources or {}
+      table.insert(
+        opts.sources,
+        cspell.diagnostics.with({
+          diagnostics_postprocess = function(diagnostic)
+            diagnostic.severity = vim.diagnostic.severity.HINT
+          end,
+        })
+      )
+      table.insert(opts.sources, cspell.code_actions)
+    end,
+  },
+}
+```
+
 ## Diagnostics
 
 ```lua
@@ -20,7 +48,6 @@ require("null-ls").setup {
 - Method: `diagnostics`
 - Command: `cspell`
 - Args: dynamically resolved (see [diagnostics source])
-
 
 ## Code Actions
 
@@ -178,7 +205,9 @@ All tests expect the latest Neovim master.
 - [ ] Custom configuration examples
 
 # Credits
+
 <!-- cSpell:disable -->
+
 These sources were initially written in jose-elias-alvarez/null-ls.nvim, with
 contributions from: [@JA-Bar], [@PumpedSardines], [@Saecki], [@Sloff], [@marianozunino],
 [@mtoohey31] and [@yoo].
