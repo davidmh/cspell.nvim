@@ -1,5 +1,4 @@
 local h = require("null-ls.helpers")
-local u = require("null-ls.utils")
 local methods = require("null-ls.methods")
 local helpers = require("cspell.helpers")
 local parser = require("cspell.diagnostics.parser")
