@@ -16,7 +16,7 @@ return h.make_builtin({
     method = DIAGNOSTICS,
     filetypes = {},
     generator_opts = {
-        command = "cspell",
+        command = "npx",
         ---@param params GeneratorParams
         args = function(params)
             local cspell_args = {
@@ -70,6 +70,8 @@ return h.make_builtin({
                     )
                 end
             end
+
+            cspell_args = vim.list_extend({ "--no-install", "cspell" }, cspell_args)
 
             return cspell_args
         end,

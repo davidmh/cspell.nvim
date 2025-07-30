@@ -117,6 +117,8 @@ describe("diagnostics", function()
 
             it("does not include a suggestions param", function()
                 assert.same({
+                    "--no-install",
+                    "cspell",
                     "-c",
                     CSPELL_MERGED_CONFIG_PATH,
                     "lint",
@@ -153,6 +155,8 @@ describe("diagnostics", function()
 
             it("includes a suggestions param", function()
                 assert.same({
+                    "--no-install",
+                    "cspell",
                     "--show-suggestions",
                     "-c",
                     CSPELL_MERGED_CONFIG_PATH,
@@ -196,6 +200,8 @@ describe("diagnostics", function()
                     })
 
                     assert.same({
+                        "--no-install",
+                        "cspell",
                         "-c",
                         CSPELL_MERGED_CONFIG_PATH,
                         "lint",
@@ -239,6 +245,8 @@ describe("diagnostics", function()
                     })
 
                     assert.same({
+                        "--no-install",
+                        "cspell",
                         "-c",
                         CSPELL_MERGED_CONFIG_PATH,
                         "lint",
