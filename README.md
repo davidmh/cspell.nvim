@@ -13,7 +13,7 @@ return {
   {
     "nvimtools/none-ls.nvim",
     event = "VeryLazy",
-    depends = { "davidmh/cspell.nvim" },
+    dependencies = { "davidmh/cspell.nvim" },
     opts = function(_, opts)
       local cspell = require("cspell")
       opts.sources = opts.sources or {}
