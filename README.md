@@ -3,6 +3,22 @@
 A companion plugin for [nvimtools/none-ls.nvim](https://github.com/nvimtools/none-ls.nvim),
 adding support for [cspell] diagnostics and code actions.
 
+## ⚠️ Deprecation notice
+
+I've stopped using CSpell in favor of [typos](https://github.com/tekumara/typos-lsp) and [Harper](https://writewithharper.com/docs/integrations/language-server).
+
+There's also [cspell-lsp](https://github.com/vlabo/cspell-lsp) which can be configured for Neovim with:
+
+```lua
+vim.lsp.config.cspell_lsp = {
+    cmd = {"cspell-lsp", "--stdio"},
+    -- filetypes = { ... }
+}
+vim.lsp.enable("cspell_lsp")
+```
+
+With all the options above, this plugin should be considered obsolete.
+
 ## How to setup in lazyvim
 
 Make sure you have `cpsell` installed, and then add the following
