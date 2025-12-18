@@ -25,13 +25,15 @@ return h.make_builtin({
                 params.ft,
                 "stdin://" .. params.bufname,
             }
-            params.cwd = params.cwd or vim.loop.cwd()
+            local force_rewrite = helpers.update_params_cwd(params)
 
             ---@type CSpellSourceConfig
             local diagnostics_config = params and params:get_config() or {}
 
             ---@type table<number|string, string>
-            local cspell_config_paths = {}
+            local cspell_config_paths = diagnostics_config.cspell_import_files
+                    and diagnostics_config.cspell_import_files(params)
+                or {}
 
             local cspell_config_directories = diagnostics_config.cspell_config_dirs or {}
             table.insert(cspell_config_directories, params.cwd)
@@ -43,7 +45,7 @@ return h.make_builtin({
                 end
                 cspell_config_paths[cspell_config_directory] = cspell_config_path
             end
-            local merged_config = helpers.create_merged_cspell_json(params, cspell_config_paths)
+            local merged_config = helpers.create_merged_cspell_json(params, cspell_config_paths, force_rewrite)
 
             cspell_args = vim.list_extend({ "-c", merged_config.path }, cspell_args)
 
